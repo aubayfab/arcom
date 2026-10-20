@@ -16,6 +16,10 @@ updates:
     groups:
       web:
         patterns: ["*"]
+    ignore:
+      # Les types suivent la version majeure de Node utilisée (22, voir les workflows).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: gradle
     directory: /android
