@@ -5,12 +5,12 @@
 
 Pilotez l'éclairage, les stores et le confort (ventilation, consigne, présence) des modules
 Bluetooth **Arcom** depuis un PC, un téléphone ou un terminal, sans l'application myArcom, qui
-n'est plus disponible.
+n'est plus disponible sur les versions récentes d'Android.
 
 Tout est local : Bluetooth direct, sans Wi-Fi ni cloud.
 
-> **Outil non officiel**, sans lien avec le Groupe Arcom, fabricant des modules. Il n'envoie que les
-> commandes que l'application d'origine envoyait. À utiliser uniquement sur les modules que vous
+> **Outil non officiel**, sans lien avec le Groupe Arcom, fabricant des modules. Il n'envoie que les mêmes
+> commandes que l'application d'origine. À utiliser uniquement sur les modules que vous
 > êtes autorisé à piloter (ceux de votre zone).
 
 ## Livrables
@@ -19,7 +19,7 @@ Tout est local : Bluetooth direct, sans Wi-Fi ni cloud.
 
 | Livrable | Pour qui | Fichier |
 |---|---|---|
-| Installateur Windows | tout le monde, sans droits administrateur | `TelecommandeArcom-Setup-<version>.exe` |
+| Installateur Windows | tout le monde, potentiellement bloqué par la sécurité du poste | `TelecommandeArcom-Setup-<version>.exe` |
 | Version portable Windows | sans rien installer | `Arcom-portable-<version>.zip` |
 | Appli Android, avec widgets | téléphone, sans PC | `TelecommandeArcom-<version>.apk` |
 | Ligne de commande (Python) | bricoleurs, scripts | `telecommande_arcom-<version>-py3-none-any.whl`, ou les scripts du dépôt |
@@ -61,7 +61,7 @@ lisibles dans `app\`.
 
 1. Copier l'APK sur le téléphone et l'ouvrir ; autoriser « Installer des applis inconnues » pour
    l'appli qui l'ouvre (Fichiers, navigateur…). Sur un téléphone géré par l'entreprise,
-   l'installation peut être bloquée : voyez avec votre service informatique.
+   l'installation peut être bloquée.
 2. Au premier lancement, accepter « Appareils à proximité » (Android 12+), ou la localisation
    (Android 11 et avant, qui l'exige pour la recherche Bluetooth). La recherche démarre seule.
 3. Mettre son module en favori avec ★ et le renommer (toucher son nom ; le PIN se règle au même
