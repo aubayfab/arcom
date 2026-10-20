@@ -112,8 +112,8 @@ def main():
                  for d in md.distributions(**({"path": [args.path]} if args.path else {}))}
     dists = installed if args.path else runtime_closure(installed)
 
-    out = ["Télécommande Arcom — composants tiers et leurs licences\n\n"
-           "Le code de la Télécommande Arcom est sous licence MIT (voir LICENCE.txt).\n"
+    out = ["Télécommande pour modules Arcom — composants tiers et leurs licences\n\n"
+           "Le code de la Télécommande pour modules Arcom est sous licence MIT (voir LICENCE.txt).\n"
            "Ce livrable contient aussi les composants suivants, chacun sous sa propre licence.\n\n"]
     summary = [f"  {d.metadata['Name']} {d.version} — {license_of(d)}"
                for d in sorted(dists.values(), key=lambda d: norm(d.metadata["Name"]))]

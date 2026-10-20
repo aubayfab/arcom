@@ -1,4 +1,4 @@
-# Télécommande Arcom
+# Télécommande pour modules Arcom
 
 [![CI](https://github.com/aubayfab/arcom/actions/workflows/ci.yml/badge.svg)](https://github.com/aubayfab/arcom/actions/workflows/ci.yml)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
@@ -43,7 +43,7 @@ L'exécutable n'est pas signé : SmartScreen affiche « Windows a protégé votr
 (« Informations complémentaires » › « Exécuter quand même »). Sur un poste d'entreprise,
 l'antivirus peut le bloquer : voyez avec votre service informatique, sans chercher à le contourner.
 
-Désinstallation : Paramètres Windows › Applications › Télécommande Arcom (supprime aussi les
+Désinstallation : Paramètres Windows › Applications › Télécommande pour modules Arcom (supprime aussi les
 données, dans `%LOCALAPPDATA%\Arcom`).
 
 ### Windows : version portable
@@ -134,7 +134,7 @@ l'état relu sur le module ; ces réglages valent pour toute la zone.
   carte, ou « Tout déconnecter » dans la notification.
 - Les modules du téléphone sont indépendants de ceux du PC.
 
-**Widgets** : appui long sur l'écran d'accueil › Widgets › Télécommande Arcom.
+**Widgets** : appui long sur l'écran d'accueil › Widgets › Télécommande pour modules Arcom.
 
 | Widget | Taille | Boutons |
 |---|---|---|

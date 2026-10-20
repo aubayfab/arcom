@@ -101,7 +101,7 @@ cd android; .\gradlew.bat testDebugUnitTest "-Dorg.gradle.jvmargs=-Xmx2g -Djavax
 2. Une fois fusionnée sur `main` :
 
    ```powershell
-   git tag -a vX.Y.Z -m "Télécommande Arcom X.Y.Z"
+   git tag -a vX.Y.Z -m "Télécommande pour modules Arcom X.Y.Z"
    git push origin vX.Y.Z
    ```
 

@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  Compile l'appli Android de la Télécommande Arcom (APK signé, avec widgets).
+  Compile l'appli Android de la Télécommande pour modules Arcom (APK signé, avec widgets).
 
 .DESCRIPTION
   android\ (Kotlin, Gradle)  ->  installer\TelecommandeArcom-<version>.apk
@@ -75,7 +75,7 @@ if (-not (Test-Path $props)) {
     Invoke-Native "keytool" {
         & $keytool -genkeypair -noprompt -keystore $store -storetype PKCS12 -alias arcom `
             -keyalg RSA -keysize 3072 -validity 10000 -storepass $password -keypass $password `
-            -dname "CN=Telecommande Arcom"
+            -dname "CN=Telecommande pour modules Arcom"
     }
     @("storeFile=keystore/arcom-release.p12", "storePassword=$password", "keyAlias=arcom", "keyPassword=$password") |
         Set-Content $props -Encoding ascii

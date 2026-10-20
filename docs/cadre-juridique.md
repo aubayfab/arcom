@@ -22,8 +22,8 @@ avis juridique.
   2 mai 2012, *SAS Institute*, C-406/10). Ce dépôt décrit des trames, des UUID et des valeurs, et
   les met en œuvre avec son propre code.
 - **Marques.** « Arcom » et « myArcom » désignent les produits du Groupe Arcom. Ils ne sont cités
-  que pour indiquer avec quels modules l'outil fonctionne. Le projet n'est ni affilié au Groupe
-  Arcom, ni approuvé ou soutenu par lui.
+  que pour indiquer avec quels modules l'outil fonctionne, d'où son nom : « Télécommande *pour
+  modules* Arcom ». Le projet n'est ni affilié au Groupe Arcom, ni approuvé ou soutenu par lui.
 - **Licences.** Le code est sous licence [MIT](../LICENSE). Les composants tiers embarqués dans les
   livrables gardent leur licence : voir [LICENCES-TIERCES.md](../LICENCES-TIERCES.md).
 
