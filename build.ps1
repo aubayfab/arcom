@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  Compile l'installateur Windows de la Télécommande Arcom.
+  Compile l'installateur Windows de la Télécommande pour modules Arcom.
 
 .DESCRIPTION
   1. interface web (Vite)  ->  web\dist
@@ -57,11 +57,11 @@ VSVersionInfo(
                     fileType=0x1, subtype=0x0, date=(0, 0)),
   kids=[
     StringFileInfo([StringTable('040C04B0', [
-      StringStruct('FileDescription', 'Télécommande Arcom'),
+      StringStruct('FileDescription', 'Télécommande pour modules Arcom'),
       StringStruct('FileVersion', '$Version'),
       StringStruct('InternalName', 'ArcomTelecommande'),
       StringStruct('OriginalFilename', 'ArcomTelecommande.exe'),
-      StringStruct('ProductName', 'Télécommande Arcom'),
+      StringStruct('ProductName', 'Télécommande pour modules Arcom'),
       StringStruct('ProductVersion', '$Version'),
       StringStruct('Comments', 'Outil non officiel de pilotage local des modules Bluetooth Arcom')])]),
     VarFileInfo([VarStruct('Translation', [0x040C, 1200])])

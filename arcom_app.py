@@ -1,4 +1,4 @@
-"""Télécommande Arcom — lanceur de l'application installée.
+"""Télécommande pour modules Arcom — lanceur de l'application installée.
 
 Double-clic : démarre le serveur local (s'il ne tourne pas déjà) et ouvre l'interface dans le
 navigateur. Une icône près de l'horloge permet de rouvrir l'interface, voir le journal ou quitter.
@@ -37,7 +37,7 @@ os.environ.setdefault("ARCOM_DATA", str(Path(os.environ.get("LOCALAPPDATA", Path
 import arcomlib  # noqa: E402
 import server  # noqa: E402
 
-APP_NAME = "Télécommande Arcom"
+APP_NAME = "Télécommande pour modules Arcom"
 PORT = int(os.environ.get("ARCOM_PORT", 8787))
 URL = f"http://127.0.0.1:{PORT}/"
 # Icône : dans l'archive PyInstaller, sinon dans packaging/ à côté de ce fichier (sources, zip portable).
@@ -61,6 +61,7 @@ def ask(text: str) -> bool:
 # --- Raccourcis, arrêt, désinstallation (utilisés par les .bat de la version zip) -------------
 
 SHORTCUT = f"{APP_NAME}.lnk"
+OLD_SHORTCUTS = ["Télécommande Arcom.lnk"]  # nom jusqu'à la 1.2.0 : remplacé à la création des raccourcis
 FOLDERS = {  # FOLDERID Windows : suit les redirections (Bureau OneDrive, etc.)
     "desktop": "{B4BFCC3A-DB2C-424C-B029-7FE99A87C641}",
     "programs": "{A77F5D77-2E2B-44C3-A6A2-ABA601054A51}",
@@ -109,6 +110,15 @@ def write_shortcuts(links: list[tuple[Path, str]]):
     log.info("Raccourcis créés : %s", ", ".join(str(p) for p, _ in links))
 
 
+def remove_shortcuts(names: list[str]):
+    for folder in FOLDERS:
+        for name in names:
+            try:
+                (known_folder(folder) / name).unlink(missing_ok=True)
+            except OSError:
+                log.warning("Raccourci non supprimé (%s, %s)", folder, name, exc_info=True)
+
+
 def create_shortcuts():
     _, args, _ = launch_command()
     links = [(known_folder("desktop") / SHORTCUT, args), (known_folder("programs") / SHORTCUT, args)]
@@ -116,8 +126,9 @@ def create_shortcuts():
                   "Lancer aussi la télécommande au démarrage de Windows ?")
     if startup:
         links.append((known_folder("startup") / SHORTCUT, f"{args} --background".strip()))
+    remove_shortcuts(OLD_SHORTCUTS)
     write_shortcuts(links)
-    message_box("Raccourcis « Télécommande Arcom » créés." +
+    message_box(f"Raccourcis « {APP_NAME} » créés." +
                 ("\nLa télécommande se lancera au démarrage de Windows." if startup else ""), error=False)
 
 
@@ -142,11 +153,7 @@ def uninstall():
                "noms donnés, journal) seront supprimés."):
         return
     stop_running()
-    for folder in FOLDERS:
-        try:
-            (known_folder(folder) / SHORTCUT).unlink(missing_ok=True)
-        except OSError:
-            log.warning("Raccourci non supprimé (%s)", folder, exc_info=True)
+    remove_shortcuts([SHORTCUT, *OLD_SHORTCUTS])
     logging.shutdown()  # libère le journal avant de le supprimer
     for f in [DATA / "modules.json", FIRST_RUN_FLAG, *DATA.glob("arcom.log*")]:
         f.unlink(missing_ok=True)

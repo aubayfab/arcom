@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  Produit la version portable (zip) de la Télécommande Arcom : rien à compiler ni à installer.
+  Produit la version portable (zip) de la Télécommande pour modules Arcom : rien à compiler ni à installer.
 
 .DESCRIPTION
   Contenu du zip (sans dossier racine : « Extraire tout » de Windows en crée déjà un) :
@@ -144,8 +144,8 @@ start "" "%~dp0python\pythonw.exe" "%~dp0app\arcom_app.py" --desinstaller
 '@ $false
 
 Write-Text (Join-Path $stage "LISEZMOI.txt") @"
-TÉLÉCOMMANDE ARCOM $Version — version portable
-==================================================
+TÉLÉCOMMANDE POUR MODULES ARCOM $Version — version portable
+===============================================================
 
 Pilote depuis ce PC, en Bluetooth, l'éclairage et les stores des modules Arcom.
 Rien à installer : tout est dans ce dossier. Outil non officiel.

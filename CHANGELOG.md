@@ -5,6 +5,16 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), num
 
 ## [Non publié]
 
+## [1.2.1] - 2026-10-20
+
+### Modifié
+
+- Le logiciel s'appelle désormais « Télécommande pour modules Arcom » : outil non officiel, il ne
+  doit pas passer pour un produit du fabricant. À la mise à jour, les raccourcis à l'ancien nom sont
+  remplacés (installateur, et « Creer les raccourcis » de la version portable).
+- Les noms de fichiers et les identifiants ne changent pas : l'appli Windows, l'appli Android et la
+  ligne de commande se mettent à jour par-dessus la version précédente, réglages conservés.
+
 ## [1.2.0] - 2026-10-20
 
 Première version publiée sur GitHub.
@@ -46,5 +56,6 @@ Diffusion interne (installateur Windows, version portable, appli Android).
 Première version, diffusée en interne : interface locale et installateur Windows, version portable,
 appli Android avec widgets, ligne de commande.
 
-[Non publié]: https://github.com/aubayfab/arcom/compare/v1.2.0...HEAD
+[Non publié]: https://github.com/aubayfab/arcom/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/aubayfab/arcom/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/aubayfab/arcom/releases/tag/v1.2.0

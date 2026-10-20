@@ -1,4 +1,4 @@
-﻿; Installateur Windows de la Télécommande Arcom (Inno Setup 6).
+﻿; Installateur Windows de la Télécommande pour modules Arcom (Inno Setup 6).
 ; Compilé par build.ps1 : ISCC /DAppVersion=x.y.z packaging\arcom.iss
 ; Installation par utilisateur, sans droits administrateur, dans %LOCALAPPDATA%\Programs.
 
@@ -8,7 +8,9 @@
 #ifndef AppDir
   #define AppDir "..\build\app\ArcomTelecommande"
 #endif
-#define AppName "Télécommande Arcom"
+#define AppName "Télécommande pour modules Arcom"
+; Nom jusqu'à la 1.2.0 : ses raccourcis sont supprimés à la mise à jour (même AppId, même dossier).
+#define OldAppName "Télécommande Arcom"
 #define AppExe "ArcomTelecommande.exe"
 
 [Setup]
@@ -17,7 +19,7 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 AppComments=Pilotage local des modules Bluetooth Arcom (éclairage, stores). Outil non officiel.
-DefaultDirName={autopf}\Telecommande Arcom
+DefaultDirName={autopf}\Telecommande pour modules Arcom
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
@@ -47,6 +49,9 @@ Source: "{#AppDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs cre
 [InstallDelete]
 ; Une mise à jour remplace entièrement l'ancienne version (bibliothèques obsolètes comprises).
 Type: filesandordirs; Name: "{app}\_internal"
+Type: files; Name: "{autoprograms}\{#OldAppName}.lnk"
+Type: files; Name: "{autodesktop}\{#OldAppName}.lnk"
+Type: files; Name: "{userstartup}\{#OldAppName}.lnk"
 
 [Icons]
 Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"

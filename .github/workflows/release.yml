@@ -130,4 +130,4 @@ jobs:
           draft=""
           ls dist/*.apk > /dev/null 2>&1 || draft="--draft"
           gh release create "$GITHUB_REF_NAME" dist/* --verify-tag $draft \
-            --title "Télécommande Arcom ${GITHUB_REF_NAME#v}" --notes-file notes.md
+            --title "Télécommande pour modules Arcom ${GITHUB_REF_NAME#v}" --notes-file notes.md
