@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ampoule de l'interface web, centrée dans la zone sûre (66 dp) de l'icône adaptative. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <group android:scaleX="2.25" android:scaleY="2.25" android:translateX="27" android:translateY="27">
+        <path android:fillColor="#F5A524" android:pathData="M12,2a7,7 0,0 0,-4 12.74V17a1,1 0,0 0,1 1h6a1,1 0,0 0,1 -1v-2.26A7,7 0,0 0,12 2Z" />
+        <path android:fillColor="#B9B4A9" android:pathData="M9,20h6v1a1,1 0,0 1,-1 1h-4a1,1 0,0 1,-1 -1Z" />
+    </group>
+</vector>

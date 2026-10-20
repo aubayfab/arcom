@@ -1,0 +1,22 @@
+# Fins de ligne : LF dans le dépôt, converties selon le poste à l'extraction.
+* text=auto
+
+# Scripts Windows : CRLF sur tous les postes.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.iss text eol=crlf
+
+# Scripts Unix : LF sur tous les postes (sinon « bad interpreter » sous Linux, en CI).
+gradlew text eol=lf
+*.sh    text eol=lf
+
+# Binaires
+*.ico binary
+*.png binary
+*.jar binary
+*.p12 binary
+*.apk binary
+*.exe binary
+*.zip binary
+*.whl binary

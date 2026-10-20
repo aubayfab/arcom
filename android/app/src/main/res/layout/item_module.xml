@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    android:background="@drawable/bg_card"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- En-tête : nom (toucher pour renommer), étoile -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/titles"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="?android:attr/selectableItemBackground"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="2"
+                android:textColor="@color/text"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/meta"
+                style="@style/Hint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/pin"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/pin"
+            android:src="@drawable/ic_star_outline" />
+    </LinearLayout>
+
+    <!-- État de la liaison -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <View
+            android:id="@+id/dot"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:background="@drawable/dot" />
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:accessibilityLiveRegion="polite"
+            android:textColor="@color/text"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/signal"
+            style="@style/Hint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="2" />
+
+        <Button
+            android:id="@+id/link"
+            style="@style/Btn.Small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+    <!-- Lumière -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/on"
+            style="@style/Btn.Accent"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_weight="1"
+            android:drawableStart="@drawable/ic_bulb"
+            android:text="@string/on" />
+
+        <Button
+            android:id="@+id/off"
+            style="@style/Btn"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:drawableStart="@drawable/ic_bulb_off"
+            android:text="@string/off" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            style="@style/RowLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/intensity" />
+
+        <Button
+            android:id="@+id/dim_down"
+            style="@style/Seg"
+            android:layout_width="64dp"
+            android:layout_height="48dp"
+            android:contentDescription="@string/dim_down"
+            android:text="−" />
+
+        <Button
+            android:id="@+id/dim_up"
+            style="@style/Seg"
+            android:layout_width="64dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="6dp"
+            android:contentDescription="@string/dim_up"
+            android:text="+" />
+    </LinearLayout>
+
+    <!-- Stores -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            style="@style/RowLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/blinds" />
+
+        <ImageButton
+            android:id="@+id/blind_up"
+            style="@style/SegIcon"
+            android:layout_width="64dp"
+            android:layout_height="48dp"
+            android:contentDescription="@string/blind_up"
+            android:src="@drawable/ic_up" />
+
+        <ImageButton
+            android:id="@+id/blind_stop"
+            style="@style/SegIcon"
+            android:layout_width="64dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="6dp"
+            android:contentDescription="@string/blind_stop"
+            android:src="@drawable/ic_stop" />
+
+        <ImageButton
+            android:id="@+id/blind_down"
+            style="@style/SegIcon"
+            android:layout_width="64dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="6dp"
+            android:contentDescription="@string/blind_down"
+            android:src="@drawable/ic_down" />
+    </LinearLayout>
+
+    <!-- Confort (CVC) : état relu sur le module, réglages repliés -->
+    <Button
+        android:id="@+id/comfort_toggle"
+        style="@style/Btn.Flat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" />
+
+    <LinearLayout
+        android:id="@+id/comfort"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            style="@style/RowLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/ventilation" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/vent_0"
+                style="@style/Seg.Text"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_weight="1.4"
+                android:minWidth="0dp"
+                android:text="@string/vent_off" />
+
+            <Button
+                android:id="@+id/vent_1"
+                style="@style/Seg.Text"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:text="1" />
+
+            <Button
+                android:id="@+id/vent_2"
+                style="@style/Seg.Text"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:text="2" />
+
+            <Button
+                android:id="@+id/vent_3"
+                style="@style/Seg.Text"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:minWidth="0dp"
+                android:text="3" />
+
+            <Button
+                android:id="@+id/vent_4"
+                style="@style/Seg.Text"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1.4"
+                android:minWidth="0dp"
+                android:text="@string/vent_auto" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/RowLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/setpoint" />
+
+            <Button
+                android:id="@+id/temp_down"
+                style="@style/Seg"
+                android:layout_width="56dp"
+                android:layout_height="44dp"
+                android:contentDescription="@string/setpoint_down"
+                android:text="−" />
+
+            <TextView
+                android:id="@+id/temp_value"
+                android:layout_width="56dp"
+                android:layout_height="wrap_content"
+                android:accessibilityLiveRegion="polite"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:textColor="@color/text"
+                android:textSize="16sp" />
+
+            <Button
+                android:id="@+id/temp_up"
+                style="@style/Seg"
+                android:layout_width="56dp"
+                android:layout_height="44dp"
+                android:contentDescription="@string/setpoint_up"
+                android:text="+" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/RowLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/presence" />
+
+            <Button
+                android:id="@+id/occ_off"
+                style="@style/Seg.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="@string/unoccupied" />
+
+            <Button
+                android:id="@+id/occ_on"
+                style="@style/Seg.Text"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginStart="6dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:text="@string/occupied" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/Hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/comfort_hint" />
+    </LinearLayout>
+
+    <!-- Connexion : les deux réglages sont désactivés par défaut (chaque commande se connecte puis libère le module) -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/border" />
+
+    <Switch
+        android:id="@+id/auto_connect"
+        style="@style/LinkSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/auto_connect" />
+
+    <Switch
+        android:id="@+id/keep_connected"
+        style="@style/LinkSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/keep_connected" />
+
+    <TextView
+        android:id="@+id/mode_hint"
+        style="@style/Hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:accessibilityLiveRegion="polite" />
+</LinearLayout>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Clair ici, sombre dans values-night. -->
+    <style name="Base.Arcom" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Base.Arcom.Dialog" parent="android:Theme.Material.Light.Dialog.Alert" />
+
+    <!-- Android 8.0 ne sait pas assombrir les icônes de la barre de navigation : barre noire. -->
+    <style name="Base.Arcom.Bars" parent="Base.Arcom">
+        <item name="android:navigationBarColor">#000000</item>
+    </style>
+
+    <style name="Theme.Arcom" parent="Base.Arcom.Bars">
+        <item name="android:colorPrimary">@color/bg</item>
+        <item name="android:colorAccent">@color/accent_text</item>
+        <item name="android:colorControlActivated">@color/accent_text</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorSecondary">@color/muted</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">@bool/light_bars</item>
+        <item name="android:alertDialogTheme">@style/Theme.Arcom.Dialog</item>
+    </style>
+
+    <style name="Theme.Arcom.Dialog" parent="Base.Arcom.Dialog">
+        <item name="android:colorAccent">@color/accent_text</item>
+        <item name="android:colorControlActivated">@color/accent_text</item>
+    </style>
+</resources>

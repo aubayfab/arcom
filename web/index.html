@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Télécommande Arcom</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23f5a524' d='M12 2a7 7 0 0 0-4 12.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26A7 7 0 0 0 12 2Z'/%3E%3Cpath fill='%236b6862' d='M9 20h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1Z'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2a7 7 0 0 0-4 12.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26A7 7 0 0 0 12 2Z" />
+          <path class="base" d="M9 20h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1Z" />
+        </svg>
+        <div>
+          <h1>Arcom</h1>
+          <p>Éclairage et stores</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span class="server-pill" id="server-pill" data-up="false">
+          <span class="dot"></span><span class="text">Connexion au serveur…</span>
+        </span>
+        <button class="btn-ghost" id="scan" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 3a7.5 7.5 0 0 1 5.96 12.05l4.25 4.24-1.42 1.42-4.24-4.25A7.5 7.5 0 1 1 10.5 3Zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11Z" /></svg>
+          <span class="text">Rechercher</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="banner" id="bt-banner" role="alert" hidden></div>
+
+    <main>
+      <p class="empty welcome" id="all-empty" hidden></p>
+      <section class="section" id="pinned">
+        <h2>Favoris <small>vos modules, en tête de liste</small></h2>
+        <p class="empty" id="pinned-empty">Ajoutez un module aux favoris avec l'étoile ★ pour le retrouver ici.</p>
+        <div class="grid"></div>
+      </section>
+      <section class="section" id="others">
+        <h2>Autres modules <small>du plus proche au plus lointain</small></h2>
+        <div class="grid"></div>
+      </section>
+    </main>
+
+    <output class="toast" id="toast" aria-live="polite"></output>
+
+    <template id="card-template">
+      <article class="card">
+        <div class="card-head">
+          <div class="titles">
+            <input class="label" type="text" maxlength="60" aria-label="Nom du module" spellcheck="false" />
+            <div class="meta"></div>
+          </div>
+          <button class="pin" type="button" aria-pressed="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.5 2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8L12 2.5Z" /></svg>
+          </button>
+        </div>
+
+        <div class="status-line">
+          <span class="dot"></span>
+          <span class="status-text"></span>
+          <span class="signal" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="rssi"></span>
+          <span class="latency"></span>
+          <button class="link-btn" type="button"></button>
+        </div>
+
+        <div class="light-row">
+          <button class="btn btn-on" type="button" data-cmd="light:on">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-4 12.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26A7 7 0 0 0 12 2Z" /><path d="M9 20h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1Z" /></svg>
+            Allumer
+          </button>
+          <button class="btn btn-off" type="button" data-cmd="light:off">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-4 12.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26A7 7 0 0 0 12 2Zm0 2a5 5 0 0 1 2.5 9.33l-.5.29V16h-4v-2.38l-.5-.29A5 5 0 0 1 12 4Z" /><path d="M9 20h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1Z" /></svg>
+            Éteindre
+          </button>
+        </div>
+
+        <div class="control-row">
+          <span class="row-label">Intensité</span>
+          <div class="segmented">
+            <button type="button" data-hold="light:down" aria-label="Baisser l'intensité (maintenir)" title="Maintenir pour baisser">−</button>
+            <button type="button" data-hold="light:up" aria-label="Augmenter l'intensité (maintenir)" title="Maintenir pour augmenter">+</button>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <span class="row-label">Stores</span>
+          <div class="segmented">
+            <button type="button" data-blind="up" aria-pressed="false" aria-label="Monter les stores"
+              title="Clic : monter / arrêter · Appui long : orienter les lames">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 7 7 8H5l7-8Z" /></svg>
+            </button>
+            <button type="button" data-cmd="blind:stop" aria-label="Arrêter les stores" title="Stop">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" /></svg>
+            </button>
+            <button type="button" data-blind="down" aria-pressed="false" aria-label="Descendre les stores"
+              title="Clic : descendre / arrêter · Appui long : orienter les lames">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 17-7-8h14l-7 8Z" /></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="hvac"></div>
+
+        <div class="link-settings">
+          <label class="switch" title="Se connecter dès le démarrage et rester connecté en permanence (pas de déconnexion possible)">
+            <input type="checkbox" role="switch" data-setting="auto_connect" />
+            <span class="track" aria-hidden="true"></span>
+            Connexion auto
+          </label>
+          <label class="switch" title="Rester connecté entre les commandes, jusqu'à « Se déconnecter »">
+            <input type="checkbox" role="switch" data-setting="keep_connected" />
+            <span class="track" aria-hidden="true"></span>
+            Maintenir la connexion
+          </label>
+          <p class="mode-hint"></p>
+        </div>
+      </article>
+    </template>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

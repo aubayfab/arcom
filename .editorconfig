@@ -1,0 +1,19 @@
+# https://editorconfig.org — fins de ligne laissées à Git (voir .gitattributes).
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{ts,js,json,css,html,yml,yaml,iss}]
+indent_size = 2
+
+# Windows PowerShell 5.1 et Inno Setup lisent l'UTF-8 sans BOM comme de l'ANSI : accents abîmés.
+[*.{ps1,iss}]
+charset = utf-8-bom
+
+[*.md]
+trim_trailing_whitespace = false

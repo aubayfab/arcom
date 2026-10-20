@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Télécommande Arcom</string>
+    <string name="app_title">Arcom</string>
+    <string name="app_subtitle">Éclairage et stores</string>
+
+    <string name="scan">Rechercher</string>
+    <string name="scanning">Recherche…</string>
+    <string name="welcome_empty">Aucun module trouvé pour l’instant. Approchez-vous d’un module Arcom puis touchez « Rechercher ». Ensuite, mettez le vôtre en favori avec l’étoile ★.</string>
+    <string name="welcome_scanning">Recherche des modules Arcom à proximité…</string>
+
+    <string name="banner_permission">La télécommande a besoin de l’autorisation « Appareils à proximité » (Bluetooth) pour trouver et piloter les modules.</string>
+    <string name="banner_allow">Autoriser</string>
+    <string name="banner_settings">Ouvrir les paramètres</string>
+    <string name="banner_bluetooth_off">Le Bluetooth est désactivé. Activez-le : la télécommande reprendra toute seule.</string>
+    <string name="banner_enable">Activer</string>
+    <string name="banner_no_bluetooth">Ce téléphone n’a pas de Bluetooth : la télécommande en a besoin pour piloter les modules.</string>
+
+    <string name="pinned_title">Favoris</string>
+    <string name="pinned_hint">Vos modules, en tête de liste</string>
+    <string name="pinned_empty">Ajoutez un module aux favoris avec l’étoile ★ pour le retrouver ici.</string>
+    <string name="others_closed">Autres modules (%1$d)  ▾</string>
+    <string name="others_open">Autres modules (%1$d)  ▴</string>
+    <string name="others_hint">Du plus proche au plus lointain</string>
+
+    <string name="pin">Ajouter aux favoris (en tête de liste)</string>
+    <string name="unpin">Retirer des favoris</string>
+    <string name="auto_connect">Connexion auto</string>
+    <string name="keep_connected">Maintenir la connexion</string>
+    <string name="mode_oneshot">Chaque commande se connecte (3 à 5 s), puis libère le module.</string>
+    <string name="mode_keep">Reste connecté entre les commandes, jusqu’à « Se déconnecter ».</string>
+    <string name="mode_auto">Connecté en permanence, même appli fermée : commandes immédiates, y compris depuis les widgets.</string>
+    <string name="connect">Se connecter</string>
+    <string name="disconnect">Se déconnecter</string>
+    <string name="connecting">Connexion…</string>
+    <string name="on">Allumer</string>
+    <string name="off">Éteindre</string>
+    <string name="intensity">Intensité</string>
+    <string name="dim_down">Baisser l’intensité (maintenir)</string>
+    <string name="dim_up">Augmenter l’intensité (maintenir)</string>
+    <string name="blinds">Stores</string>
+    <string name="blind_up">Monter les stores (appui long : orienter les lames)</string>
+    <string name="blind_stop">Arrêter les stores</string>
+    <string name="blind_down">Descendre les stores (appui long : orienter les lames)</string>
+    <string name="ventilation">Ventilation</string>
+    <string name="vent_off">Arrêt</string>
+    <string name="vent_auto">Auto</string>
+    <string name="setpoint">Consigne</string>
+    <string name="setpoint_down">Baisser la consigne</string>
+    <string name="setpoint_up">Monter la consigne</string>
+    <string name="presence">Présence</string>
+    <string name="unoccupied">Inoccupé</string>
+    <string name="occupied">Occupé</string>
+    <string name="comfort_hint">Ces réglages valent pour toute la zone du module.</string>
+
+    <string name="edit_label">Nom affiché</string>
+    <string name="edit_pin">Code PIN du module (0000 par défaut)</string>
+    <string name="save">Enregistrer</string>
+    <string name="cancel">Annuler</string>
+
+    <string name="channel_links">Connexion aux modules</string>
+    <string name="channel_links_desc">Affichée tant qu’un module reste connecté (connexion auto, maintien de la connexion, commande en cours).</string>
+    <string name="disconnect_all">Tout déconnecter</string>
+
+    <string name="widget_remote_label">Arcom – télécommande</string>
+    <string name="widget_remote_desc">Lumière, intensité et stores d’un module</string>
+    <string name="widget_light_label">Arcom – lumière</string>
+    <string name="widget_light_desc">Allumer et éteindre</string>
+    <string name="widget_blind_label">Arcom – stores</string>
+    <string name="widget_blind_desc">Monter, arrêter, descendre</string>
+    <string name="widget_preview_name">Mon bureau</string>
+    <string name="widget_unconfigured">Module à choisir</string>
+
+    <string name="widget_config_title">Module du widget</string>
+    <string name="widget_config_hint">Le widget pilotera ce module. Par défaut, chaque appui se connecte (≈ 4 s) puis libère le module. Pour des commandes immédiates, activez « Connexion auto » sur ce module dans l’appli.</string>
+    <string name="widget_config_empty">Aucun module connu. Ouvrez la télécommande et lancez une recherche, puis revenez ici.</string>
+    <string name="widget_config_open_app">Ouvrir la télécommande</string>
+    <string name="widget_config_groups">Groupes pilotés</string>
+    <string name="widget_config_groups_hint">Les quatre cochés : tous les groupes (le cas le plus courant).</string>
+    <string name="widget_config_pick">Choisissez un module.</string>
+    <string name="widget_config_groups_none">Cochez au moins un groupe.</string>
+    <string name="widget_config_add">Valider</string>
+</resources>

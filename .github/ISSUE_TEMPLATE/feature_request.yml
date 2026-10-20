@@ -1,0 +1,22 @@
+name: Proposer une idée
+description: Une fonctionnalité, une amélioration, un autre modèle de module à prendre en charge.
+labels: ["amélioration"]
+body:
+  - type: textarea
+    id: besoin
+    attributes:
+      label: Le besoin
+      description: Ce que vous voudriez pouvoir faire, et pourquoi.
+    validations:
+      required: true
+  - type: textarea
+    id: idee
+    attributes:
+      label: Une idée de solution ?
+  - type: textarea
+    id: protocole
+    attributes:
+      label: Ce que vous savez du protocole (facultatif)
+      description: >
+        Trames, UUID, valeurs relues sur le module. Décrivez le comportement observé : pas de code
+        issu de l'appli du fabricant (voir docs/cadre-juridique.md).

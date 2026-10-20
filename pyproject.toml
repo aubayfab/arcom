@@ -1,0 +1,53 @@
+# Paquet pip de la ligne de commande (commande « arcom ») : arcomlib.py + arcom_cli.py.
+# L'appli Windows (server.py, arcom_app.py) est livrée par build.ps1 / package.ps1, pas par pip.
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "telecommande-arcom"
+dynamic = ["version"]
+description = "Pilotage en ligne de commande des modules Bluetooth Arcom (éclairage, stores, CVC). Outil non officiel."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Aubay" }]
+requires-python = ">=3.10"
+dependencies = ["bleak>=3.0"]
+keywords = ["arcom", "bluetooth", "ble", "domotique", "gtb", "éclairage", "stores"]
+classifiers = [
+    "Environment :: Console",
+    "Natural Language :: French",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Programming Language :: Python :: 3",
+    "Topic :: Home Automation",
+]
+
+[project.scripts]
+arcom = "arcom_cli:main"
+
+[project.urls]
+Homepage = "https://github.com/aubayfab/arcom"
+Issues = "https://github.com/aubayfab/arcom/issues"
+Changelog = "https://github.com/aubayfab/arcom/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+py-modules = ["arcomlib", "arcom_cli"]
+
+[tool.setuptools.dynamic]
+version = { file = "VERSION" }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["_local", "build", "installer", "web", "android"]
+
+[tool.ruff.lint]
+# Liste explicite : le jeu de règles par défaut de ruff s'élargit au fil des versions.
+select = ["E4", "E7", "E9", "F", "W", "I", "UP"]

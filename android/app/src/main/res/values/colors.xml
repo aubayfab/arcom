@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Palette de l'interface web (web/src/style.css). Variante sombre : values-night. -->
+<resources>
+    <color name="bg">#F5F4F0</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface2">#EFEDE7</color>
+    <color name="surface3">#E4E1D9</color>
+    <color name="text">#1C1B19</color>
+    <color name="muted">#6D6A63</color>
+    <color name="border">#E2DFD7</color>
+    <color name="accent">#F5A524</color>
+    <color name="accent_ink">#362300</color>
+    <!-- Accent lisible en texte sur fond clair (boutons de dialogue, cases à cocher). -->
+    <color name="accent_text">#8A5A00</color>
+    <color name="ok">#2E9A58</color>
+    <color name="warn">#D58B06</color>
+    <color name="err">#CF4339</color>
+    <color name="banner">#FFF1D2</color>
+    <color name="toast">#1C1B19</color>
+    <color name="toast_text">#F5F4F0</color>
+    <color name="ripple">#1F000000</color>
+    <color name="ic_launcher_bg">#1F1E1B</color>
+</resources>

@@ -1,0 +1,59 @@
+name: Signaler un problème
+description: Quelque chose ne fonctionne pas comme prévu.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci ! Ne joignez pas d'adresse MAC réelle, de nom de bureau ni de capture de scan :
+        remplacez-les par des valeurs fictives (`AA:BB:CC:DD:EE:01`).
+  - type: dropdown
+    id: livrable
+    attributes:
+      label: Livrable
+      options:
+        - Installateur Windows
+        - Version portable Windows
+        - Appli Android
+        - Widget Android
+        - Ligne de commande
+        - Sources (développement)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Nom du fichier téléchargé, ou `arcom --version`.
+      placeholder: "1.2.0"
+    validations:
+      required: true
+  - type: input
+    id: systeme
+    attributes:
+      label: Système
+      placeholder: "Windows 11 24H2 / Android 15, Pixel 8…"
+    validations:
+      required: true
+  - type: textarea
+    id: probleme
+    attributes:
+      label: Ce qui se passe
+      description: Étapes pour reproduire, ce qui était attendu, ce qui s'est passé.
+    validations:
+      required: true
+  - type: dropdown
+    id: connexion
+    attributes:
+      label: Réglage de connexion du module
+      options:
+        - Aucun (par défaut)
+        - Maintenir la connexion
+        - Connexion auto
+        - Je ne sais pas
+  - type: textarea
+    id: journal
+    attributes:
+      label: Journal
+      description: "Windows : icône près de l'horloge › Voir le journal (`%LOCALAPPDATA%\\Arcom\\arcom.log`). Masquez les adresses MAC."
+      render: text

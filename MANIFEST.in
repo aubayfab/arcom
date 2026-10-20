@@ -1,0 +1,2 @@
+# Archive source du paquet pip : le numéro de version est lu dans VERSION.
+include VERSION

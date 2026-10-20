@@ -1,0 +1,23 @@
+{
+  // Empêche l'extension Java (Red Hat) de lancer des daemons Gradle en boucle
+  // à chaque tentative d'import du projet android/ (saturation mémoire).
+  "java.import.gradle.enabled": false,
+  "java.gradle.buildServer.enabled": "off",
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.metadata/**",
+    "**/archetype-resources/**",
+    "**/META-INF/maven/**",
+    "**/_local/**",
+    "**/build/**",
+    "**/.venv/**"
+  ],
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tests"],
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true
+  }
+}

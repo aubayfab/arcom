@@ -1,0 +1,133 @@
+# Publie une release à chaque tag vX.Y.Z (voir docs/compilation.md, « Publier une version »).
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  windows:
+    name: Windows (installateur, version portable, paquet pip)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Le tag correspond au fichier VERSION
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          if ("v$version" -ne $env:GITHUB_REF_NAME) { throw "Tag $env:GITHUB_REF_NAME, mais VERSION contient $version" }
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Dépendances
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .venv\Scripts\python -m pip install -r requirements.txt -r requirements-build.txt
+          npm ci --prefix web
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+          # Version 6 fixée : build.ps1 cherche ISCC.exe dans « Inno Setup 6 ».
+          if (-not ($iscc | Where-Object { Test-Path $_ })) { choco install innosetup --version=6.7.1 --no-progress -y }
+      # Windows PowerShell 5.1 : la version que les scripts visent sur les postes.
+      - name: Installateur
+        shell: powershell
+        run: .\build.ps1
+      - name: Version portable
+        shell: powershell
+        run: .\package.ps1
+      - name: Paquet pip
+        shell: pwsh
+        run: .venv\Scripts\python -m pip wheel . --no-deps -w installer
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: |
+            installer/*.exe
+            installer/*.zip
+            installer/*.whl
+          if-no-files-found: error
+
+  android:
+    name: Android (APK signé)
+    runs-on: ubuntu-latest
+    env:
+      # Sans ces secrets, pas d'APK : la release reste en brouillon, à compléter à la main.
+      KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Pas de clé de signature
+        if: env.KEYSTORE_BASE64 == ''
+        run: |
+          echo "::warning::Secrets de signature Android absents (docs/compilation.md) : release en brouillon, sans APK."
+      - uses: actions/setup-java@v6
+        if: env.KEYSTORE_BASE64 != ''
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - name: Clé de signature
+        if: env.KEYSTORE_BASE64 != ''
+        env:
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          mkdir -p android/keystore
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/keystore/arcom-release.p12
+          printf 'storeFile=keystore/arcom-release.p12\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+            "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > android/keystore.properties
+      - name: Tests et APK signé
+        if: env.KEYSTORE_BASE64 != ''
+        working-directory: android
+        run: ./gradlew --no-daemon --console=plain testDebugUnitTest assembleRelease
+      - name: Vérification de la signature
+        if: env.KEYSTORE_BASE64 != ''
+        run: |
+          mkdir -p installer
+          apk="installer/TelecommandeArcom-${GITHUB_REF_NAME#v}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "$apk"
+          buildtools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$buildtools/apksigner" verify --print-certs "$apk"
+      - uses: actions/upload-artifact@v7
+        if: env.KEYSTORE_BASE64 != ''
+        with:
+          name: android
+          path: installer/*.apk
+          if-no-files-found: error
+
+  publish:
+    name: Release GitHub
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Notes de version (section du CHANGELOG)
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="[$version]" '/^## /{ p = index($0, v) > 0; next } p' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then echo "::error::Section [$version] absente de CHANGELOG.md"; exit 1; fi
+      - name: Création de la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          draft=""
+          ls dist/*.apk > /dev/null 2>&1 || draft="--draft"
+          gh release create "$GITHUB_REF_NAME" dist/* --verify-tag $draft \
+            --title "Télécommande Arcom ${GITHUB_REF_NAME#v}" --notes-file notes.md

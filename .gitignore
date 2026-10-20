@@ -1,0 +1,48 @@
+# Environnements et caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+node_modules/
+
+# Compilation et livrables : publiés dans les Releases GitHub, jamais dans Git
+build/
+dist/
+installer/
+web/dist/
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/
+android/local.properties
+*.apk
+*.aab
+
+# Secrets : clé de signature Android (à sauvegarder ailleurs, voir docs/compilation.md)
+android/keystore/
+android/keystore.properties
+*.p12
+*.jks
+*.keystore
+
+# Données locales : registre des modules (MAC, noms donnés), journaux, captures des outils
+modules.json
+*.json.tmp
+*.log
+scan_*.json
+snapshot_*.json
+
+# Rétro-ingénierie (APK décompilé…) et autres fichiers personnels : jamais publiés
+_local/
+
+# Éditeurs et système
+.idea/
+*.iml
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+desktop.ini
