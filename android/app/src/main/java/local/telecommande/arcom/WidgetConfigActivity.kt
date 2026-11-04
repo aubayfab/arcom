@@ -80,7 +80,6 @@ class WidgetConfigActivity : Activity() {
                 val detail = listOfNotNull(
                     m.name.takeIf { m.label.isNotBlank() },
                     m.rssi?.let { "$it dBm" },
-                    getString(R.string.auto_connect).lowercase().takeIf { m.autoConnect },
                 )
                 text = star + m.displayName + if (detail.isEmpty()) "" else "\n" + detail.joinToString(" · ")
                 textSize = 16f

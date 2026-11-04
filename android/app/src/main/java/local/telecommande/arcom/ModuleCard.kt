@@ -32,7 +32,6 @@ class ModuleCard(private val activity: MainActivity, private val mac: String) {
     private val tempValue: TextView = view.findViewById(R.id.temp_value)
     private val occOff: Button = view.findViewById(R.id.occ_off)
     private val occOn: Button = view.findViewById(R.id.occ_on)
-    private val autoSwitch: Switch = view.findViewById(R.id.auto_connect)
     private val keepSwitch: Switch = view.findViewById(R.id.keep_connected)
     private val modeHint: TextView = view.findViewById(R.id.mode_hint)
 
@@ -76,8 +75,7 @@ class ModuleCard(private val activity: MainActivity, private val mac: String) {
             val l = link
             if (l != null && (l.wanted || l.status == LinkStatus.CONNECTED)) Arcom.disconnect(mac) else Arcom.connect(mac)
         }
-        // Clic plutôt que changement d'état : update() recoche les interrupteurs sans rien déclencher.
-        autoSwitch.setOnClickListener { Arcom.update(mac, autoConnect = autoSwitch.isChecked) }
+        // Clic plutôt que changement d'état : update() recoche l'interrupteur sans rien déclencher.
         keepSwitch.setOnClickListener { Arcom.update(mac, keepConnected = keepSwitch.isChecked) }
         view.findViewById<View>(R.id.on).setOnClickListener { send(Command.Light(LightAction.ON), "lumière allumée") }
         view.findViewById<View>(R.id.off).setOnClickListener { send(Command.Light(LightAction.OFF), "lumière éteinte") }
@@ -234,8 +232,8 @@ class ModuleCard(private val activity: MainActivity, private val mac: String) {
             listOfNotNull(m.rssi?.let { "$it dBm" }, link?.lastMs?.let { "$it ms" }).joinToString(" · ")
         }
 
-        // Connexion auto : pas de déconnexion possible ; sans maintien, chaque commande se connecte seule.
-        linkButton.visibility = if (m.keepConnected && !m.autoConnect) View.VISIBLE else View.GONE
+        // Sans maintien, chaque commande se connecte seule : pas de bouton de connexion.
+        linkButton.visibility = if (m.keepConnected) View.VISIBLE else View.GONE
         val holding = link?.wanted == true || status == LinkStatus.CONNECTED
         linkButton.setText(
             when {
@@ -246,17 +244,8 @@ class ModuleCard(private val activity: MainActivity, private val mac: String) {
         )
         linkButton.isEnabled = holding || status != LinkStatus.CONNECTING
 
-        autoSwitch.isChecked = m.autoConnect
-        // La connexion auto implique le maintien : affiché coché, et non modifiable tant qu'elle est active.
-        keepSwitch.isChecked = m.keepConnected || m.autoConnect
-        keepSwitch.isEnabled = !m.autoConnect
-        modeHint.setText(
-            when {
-                m.autoConnect -> R.string.mode_auto
-                m.keepConnected -> R.string.mode_keep
-                else -> R.string.mode_oneshot
-            },
-        )
+        keepSwitch.isChecked = m.keepConnected
+        modeHint.setText(if (m.keepConnected) R.string.mode_keep else R.string.mode_oneshot)
 
         val moving = link?.blindDirection()
         blindUp.isSelected = moving == Direction.UP

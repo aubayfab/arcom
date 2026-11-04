@@ -50,7 +50,7 @@ class UiSmokeTest {
         Arcom.init(app)
         shadowOf(app.getSystemService(BluetoothManager::class.java).adapter).setEnabled(false)
         Arcom.registry.seen(MAC, "ARC_1302", -60)
-        Arcom.update(MAC, label = LABEL, pinned = true, autoConnect = false, keepConnected = false)
+        Arcom.update(MAC, label = LABEL, pinned = true, keepConnected = false)
     }
 
     private fun idle() = shadowOf(Looper.getMainLooper()).idle()
@@ -81,21 +81,18 @@ class UiSmokeTest {
     }
 
     @Test
-    fun connectionSwitchesOffByDefaultSavedAndShownOnCard() {
+    fun connectionSwitchOffByDefaultSavedAndShownOnCard() {
         Arcom.registry.seen("AA:BB:CC:DD:EE:02", "ARC_1301", -71) // module jamais réglé
-        assertFalse(Arcom.registry.get("AA:BB:CC:DD:EE:02")!!.autoConnect)
         assertFalse(Arcom.registry.get("AA:BB:CC:DD:EE:02")!!.keepConnected)
 
         val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
         idle()
         val card = activity.findViewById<LinearLayout>(R.id.pinned_list).getChildAt(0)
-        val auto = card.findViewById<Switch>(R.id.auto_connect)
         val keep = card.findViewById<Switch>(R.id.keep_connected)
         val link = card.findViewById<Button>(R.id.link)
         val hint = card.findViewById<TextView>(R.id.mode_hint)
 
         // Par défaut : ponctuel, pas de bouton de connexion.
-        assertFalse(auto.isChecked)
         assertFalse(keep.isChecked)
         assertEquals(View.GONE, link.visibility)
         assertEquals(activity.getString(R.string.mode_oneshot), hint.text.toString())
@@ -104,6 +101,7 @@ class UiSmokeTest {
         keep.performClick()
         idle()
         assertTrue(Arcom.registry.get(MAC)!!.keepConnected)
+        assertEquals(activity.getString(R.string.mode_keep), hint.text.toString())
         assertEquals(View.VISIBLE, link.visibility)
         assertEquals(activity.getString(R.string.disconnect), link.text.toString())
         link.performClick()
@@ -111,60 +109,48 @@ class UiSmokeTest {
         assertEquals(activity.getString(R.string.connect), link.text.toString())
         assertFalse(Arcom.link(MAC).wanted)
 
-        // Connexion auto : maintien coché et figé, plus de déconnexion possible.
-        auto.performClick()
+        // « Se connecter » : liaison voulue (Bluetooth coupé ici : elle sera établie à son retour) ;
+        // désactiver le maintien libère le module.
+        link.performClick()
         idle()
-        assertTrue(keep.isChecked)
-        assertFalse(keep.isEnabled)
-        assertEquals(View.GONE, link.visibility)
-        Arcom.disconnect(MAC)
         assertTrue(Arcom.link(MAC).wanted)
-        assertEquals(activity.getString(R.string.mode_auto), hint.text.toString())
-
-        assertTrue(Arcom.registry.get(MAC)!!.autoConnect)
-        assertTrue(Arcom.registry.get(MAC)!!.keepConnected)
-
-        // Connexion auto retirée : le maintien reste (une liaison ouverte resterait tenue ; ici, aucune).
-        auto.performClick()
-        idle()
-        assertTrue(keep.isChecked)
-        assertTrue(keep.isEnabled)
-        assertEquals(View.VISIBLE, link.visibility)
-        assertEquals(activity.getString(R.string.connect), link.text.toString())
         keep.performClick()
         idle()
+        assertFalse(Arcom.registry.get(MAC)!!.keepConnected)
         assertFalse(Arcom.link(MAC).wanted)
         assertEquals(View.GONE, link.visibility)
     }
 
     /**
-     * Réglages de connexion relus depuis modules.json (format du PC), désactivés si absents.
+     * Réglage de connexion relu depuis modules.json (format du PC), désactivé s'il est absent.
      * Fichier absent au départ : AtomicFile remplace le fichier par un renommage, que Windows
      * refuse quand la cible existe (Robolectric, Android 11+), contrairement à Android.
      */
     @Test
-    fun registryRoundTripKeepsConnectionSettings() {
+    fun registryRoundTripKeepsConnectionSetting() {
         val file = File.createTempFile("modules", ".json").apply { delete() }
         val other = "AA:BB:CC:DD:EE:02"
         Registry(file).apply {
-            seen(MAC, "ARC_1302", -60).autoConnect = true
-            seen(other, "ARC_1301", -71).keepConnected = true
+            seen(MAC, "ARC_1302", -60).keepConnected = true
+            seen(other, "ARC_1301", -71)
             save()
         }
         val loaded = Registry(file)
-        assertTrue(loaded.get(MAC)!!.autoConnect)
-        assertFalse(loaded.get(MAC)!!.keepConnected)
-        assertFalse(loaded.get(other)!!.autoConnect)
-        assertTrue(loaded.get(other)!!.keepConnected)
+        assertTrue(loaded.get(MAC)!!.keepConnected)
+        assertFalse(loaded.get(other)!!.keepConnected)
         val json = JSONObject(file.readText()).getJSONArray("modules").getJSONObject(0)
-        assertTrue(json.has("auto_connect") && json.has("keep_connected"))
+        assertTrue(json.has("keep_connected"))
+        assertFalse(json.has("auto_connect"))
 
-        // Fichier d'une version précédente : réglages absents, donc désactivés ; le favori reste.
+        // Fichier d'une version précédente : réglage absent, donc désactivé ; le favori reste.
         file.writeText("""{"modules":[{"mac":"$MAC","name":"ARC_1302","pinned":true}]}""")
         val legacy = Registry(file).get(MAC)!!
-        assertFalse(legacy.autoConnect)
         assertFalse(legacy.keepConnected)
         assertTrue(legacy.pinned)
+
+        // « Connexion auto » (jusqu'à la 1.2.1), retirée : le module passe en maintien de la connexion.
+        file.writeText("""{"modules":[{"mac":"$MAC","name":"ARC_1302","auto_connect":true,"keep_connected":false}]}""")
+        assertTrue(Registry(file).get(MAC)!!.keepConnected)
         file.delete()
     }
 

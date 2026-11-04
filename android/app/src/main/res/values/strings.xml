@@ -25,11 +25,9 @@
 
     <string name="pin">Ajouter aux favoris (en tête de liste)</string>
     <string name="unpin">Retirer des favoris</string>
-    <string name="auto_connect">Connexion auto</string>
     <string name="keep_connected">Maintenir la connexion</string>
     <string name="mode_oneshot">Chaque commande se connecte (3 à 5 s), puis libère le module.</string>
     <string name="mode_keep">Reste connecté entre les commandes, jusqu’à « Se déconnecter ».</string>
-    <string name="mode_auto">Connecté en permanence, même appli fermée : commandes immédiates, y compris depuis les widgets.</string>
     <string name="connect">Se connecter</string>
     <string name="disconnect">Se déconnecter</string>
     <string name="connecting">Connexion…</string>
@@ -59,7 +57,7 @@
     <string name="cancel">Annuler</string>
 
     <string name="channel_links">Connexion aux modules</string>
-    <string name="channel_links_desc">Affichée tant qu’un module reste connecté (connexion auto, maintien de la connexion, commande en cours).</string>
+    <string name="channel_links_desc">Affichée tant qu’un module reste connecté (maintien de la connexion, commande en cours).</string>
     <string name="disconnect_all">Tout déconnecter</string>
 
     <string name="widget_remote_label">Arcom – télécommande</string>
@@ -72,7 +70,7 @@
     <string name="widget_unconfigured">Module à choisir</string>
 
     <string name="widget_config_title">Module du widget</string>
-    <string name="widget_config_hint">Le widget pilotera ce module. Par défaut, chaque appui se connecte (≈ 4 s) puis libère le module. Pour des commandes immédiates, activez « Connexion auto » sur ce module dans l’appli.</string>
+    <string name="widget_config_hint">Le widget pilotera ce module. Par défaut, chaque appui se connecte (≈ 4 s) puis libère le module. Pour des commandes immédiates, activez « Maintenir la connexion » sur ce module dans l’appli : après le premier appui, il reste connecté jusqu’à « Se déconnecter ».</string>
     <string name="widget_config_empty">Aucun module connu. Ouvrez la télécommande et lancez une recherche, puis revenez ici.</string>
     <string name="widget_config_open_app">Ouvrir la télécommande</string>
     <string name="widget_config_groups">Groupes pilotés</string>

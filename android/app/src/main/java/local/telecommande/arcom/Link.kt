@@ -35,9 +35,8 @@ class CommandResult(val ms: Long, val reversed: Boolean)
  * - Par défaut, chaque commande se connecte (3,5 à 5,5 s, le temps que le module émette une
  *   annonce), écrit, puis libère le module : il reste libre pour un autre appareil (un module
  *   n'accepte qu'une liaison). Un appui maintenu (variation, lames) garde la liaison jusqu'à son stop.
- * - « Maintenir la connexion » : liaison tenue entre les commandes, jusqu'à « Se déconnecter ».
- * - « Connexion auto » : liaison permanente ; hors de portée, autoConnect (Android attend le module
- *   à faible consommation).
+ * - « Maintenir la connexion » : liaison tenue entre les commandes, jusqu'à « Se déconnecter » ;
+ *   hors de portée, attente du module par la pile Android (autoConnect, à faible consommation).
  * - Écriture avec accusé, comme l'app d'origine : la trame part au même événement de connexion
  *   qu'une écriture sans accusé, et une liaison morte est détectée au lieu d'avaler les commandes.
  * - Pas de requestConnectionPriority : le module réclame 150–300 ms et raccroche au bout de
@@ -70,7 +69,7 @@ class Link(val mac: String) {
     private var session: Session? = null
     private var opening: Session? = null // connexion GATT de la tentative en cours
     private var attempt: Deferred<Session>? = null
-    private var attemptAuto = false
+    private var attemptWaiting = false
     private var retryAt = 0L
     private var backoff = BACKOFF_MIN_MS
     private val commandLock = Mutex() // les commandes partent dans l'ordre (ex. « + » puis « stop »)
@@ -79,14 +78,11 @@ class Link(val mac: String) {
     private val module: ModuleInfo? get() = Arcom.registry.get(mac)
     private val name: String get() = module?.displayName ?: mac
 
-    /** « Connexion auto » : connecté en permanence, pas de déconnexion possible. */
-    val auto: Boolean get() = module?.autoConnect == true
-
-    /** Liaison gardée entre les commandes (« Maintenir la connexion », implicite en connexion auto). */
-    val keep: Boolean get() = auto || module?.keepConnected == true
+    /** Liaison gardée entre les commandes (« Maintenir la connexion »). */
+    val keep: Boolean get() = module?.keepConnected == true
 
     /** Liaison à tenir, et à rétablir si elle tombe. */
-    val wanted: Boolean get() = auto || (keep && held)
+    val wanted: Boolean get() = keep && held
     private val busy: Boolean get() = pending > 0 || gesture != null
 
     private fun setStatus(value: LinkStatus, message: String? = null) {
@@ -101,20 +97,21 @@ class Link(val mac: String) {
         ensure()
     }
 
-    /** Session prête ; partage la tentative directe en cours, remplace une attente autoConnect. */
+    /** Session prête ; partage la tentative directe en cours, remplace une attente du module. */
     private suspend fun ensure(): Session {
         session?.takeIf { it.alive }?.let { return it }
-        val running = attempt?.takeIf { it.isActive && !attemptAuto }
-        return (running ?: startAttempt(auto = false)).await()
+        val running = attempt?.takeIf { it.isActive && !attemptWaiting }
+        return (running ?: startAttempt(waiting = false)).await()
     }
 
-    private fun startAttempt(auto: Boolean): Deferred<Session> {
+    /** [waiting] : la pile Android guette le module sans délai maximal (autoConnect), au lieu de le joindre tout de suite. */
+    private fun startAttempt(waiting: Boolean): Deferred<Session> {
         cancelAttempt()
         val job = Arcom.scope.async {
-            setStatus(if (auto) LinkStatus.WAITING else LinkStatus.CONNECTING)
+            setStatus(if (waiting) LinkStatus.WAITING else LinkStatus.CONNECTING)
             val t0 = SystemClock.elapsedRealtime()
             try {
-                val s = open(auto)
+                val s = open(waiting)
                 session = s
                 backoff = BACKOFF_MIN_MS
                 Log.i(Arcom.TAG, "$name : connecté en ${SystemClock.elapsedRealtime() - t0} ms")
@@ -133,18 +130,18 @@ class Link(val mac: String) {
             }
         }
         attempt = job
-        attemptAuto = auto
+        attemptWaiting = waiting
         job.invokeOnCompletion { if (attempt === job) attempt = null }
         return job
     }
 
-    private suspend fun open(auto: Boolean): Session {
+    private suspend fun open(waiting: Boolean): Session {
         val adapter = Arcom.adapter?.takeIf { it.isEnabled } ?: throw IOException("Bluetooth désactivé")
         val device = adapter.getRemoteDevice(mac)
         var last: Exception? = null
-        repeat(if (auto) 1 else 2) { // 2e essai : l'erreur 133 de la pile Android est fréquente
+        repeat(if (waiting) 1 else 2) { // 2e essai : l'erreur 133 de la pile Android est fréquente
             val s = Session()
-            val gatt = device.connectGatt(Arcom.context, auto, s, BluetoothDevice.TRANSPORT_LE)
+            val gatt = device.connectGatt(Arcom.context, waiting, s, BluetoothDevice.TRANSPORT_LE)
             if (gatt == null) {
                 last = IOException("connexion refusée par Android")
                 return@repeat
@@ -152,7 +149,7 @@ class Link(val mac: String) {
             s.gatt = gatt
             opening = s
             try {
-                if (auto) {
+                if (waiting) {
                     s.ready.await()
                 } else {
                     withTimeoutOrNull(CONNECT_TIMEOUT_MS) { s.ready.await() }
@@ -173,7 +170,7 @@ class Link(val mac: String) {
         throw last ?: IOException("connexion impossible")
     }
 
-    /** Liaison voulue (connexion auto, ou maintien) : la rétablit si besoin. */
+    /** Liaison voulue (maintien de la connexion) : la rétablit si besoin. */
     fun maintain() {
         if (!wanted || alive || attempt?.isActive == true) return
         if (!Arcom.bluetoothOn || !Permissions.canConnect(Arcom.context)) return // repris à l'autorisation / au rallumage
@@ -185,7 +182,7 @@ class Link(val mac: String) {
                 throw e
             } catch (e: Exception) {
                 // Hors de portée : Android guette le module et s'y connecte dès qu'il réapparaît.
-                if (wanted && !alive && attempt?.isActive != true) startAttempt(auto = true)
+                if (wanted && !alive && attempt?.isActive != true) startAttempt(waiting = true)
             }
         }
     }

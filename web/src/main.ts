@@ -19,15 +19,16 @@ interface Module {
   pinned: boolean
   rssi: number | null
   last_seen: number | null
-  /** « Connexion auto » : connecté en permanence, pas de déconnexion possible. */
-  auto_connect: boolean
   /** « Maintenir la connexion » : reste connecté entre les commandes jusqu'à « Se déconnecter ». */
   keep_connected: boolean
   /** Liaison tenue en mode maintien (connecté, et pas encore « Se déconnecter »). */
   held: boolean
   status: Status
   error: string | null
+  /** État CVC relu sur le module (null tant qu'il n'a pas été connecté). */
   state: HvacState | null
+  /** Consigne demandée (0..12) que le module n'a pas encore reflétée. */
+  setpoint: number | null
   last_ms: number | null
   blind: 'up' | 'down' | null
   points: Record<string, number>
@@ -42,6 +43,8 @@ type ServerMessage =
   | { type: 'bluetooth'; state: Bluetooth }
 
 interface CommandResult {
+  /** Action envoyée : pour un cran de consigne (« up » / « down »), la consigne résolue (0..12). */
+  action: string
   frame: string
   frames: string[]
   write_ms: number
@@ -58,6 +61,28 @@ const ACTION_TEXT: Record<string, string> = {
 
 /** Au-delà, l'appui sur ▲/▼ oriente les lames au lieu de lancer la course (comme l'app d'origine). */
 const LONG_PRESS_MS = 450
+
+/** Ventilation demandée affichée au plus ce délai, le temps que le module la reflète (~1,5 s). */
+const VENT_PENDING_MS = 5000
+
+/** Ventilation 0..4 : 0 = arrêt, 4 = auto. */
+function ventText(level: number): string {
+  if (level === 0) return 'arrêtée'
+  return level >= 4 ? 'auto' : String(level)
+}
+
+/** Consigne brute 0..12 -> écart à la consigne de la zone (6 = neutre). */
+function offsetText(offset: number): string {
+  const d = offset - 6
+  if (d > 0) return `+${d}`
+  return d < 0 ? `−${-d}` : '±0'
+}
+
+function actionText(kind: string, action: string): string {
+  if (kind === 'vent') return `ventilation ${ventText(Number(action))}`
+  if (kind === 'temp') return `température ${offsetText(Number(action))}`
+  return ACTION_TEXT[`${kind}:${action}`] ?? `${kind} ${action}`
+}
 
 const modules = new Map<string, Module>()
 const cards = new Map<string, Card>()
@@ -109,16 +134,13 @@ const STATUS_TEXT: Record<Status, string> = {
   error: 'Injoignable',
 }
 
-type Setting = 'auto_connect' | 'keep_connected'
-
 /** Le module doit rester connecté (et être reconnecté s'il décroche). */
-const wanted = (m: Module) => m.auto_connect || (m.keep_connected && m.held)
+const wanted = (m: Module) => m.keep_connected && m.held
 
-function modeHint(m: Module): string {
-  if (m.auto_connect) return 'Connecté en permanence : commandes immédiates.'
-  if (m.keep_connected) return 'Reste connecté entre les commandes, jusqu’à « Se déconnecter ».'
-  return 'Chaque commande se connecte (3 à 5 s), puis libère le module.'
-}
+const modeHint = (m: Module) =>
+  m.keep_connected
+    ? 'Reste connecté entre les commandes, jusqu’à « Se déconnecter ».'
+    : 'Chaque commande se connecte (3 à 5 s), puis libère le module.'
 
 function signalLevel(rssi: number | null): number {
   if (rssi === null) return 0
@@ -128,11 +150,9 @@ function signalLevel(rssi: number | null): number {
   return 1
 }
 
+/** Ventilation et consigne ont leurs propres commandes : restent l'occupation et les alarmes. */
 function hvacChips(s: HvacState): string[] {
   const chips = [s.occupation === 1 ? 'Occupé' : 'Inoccupé']
-  chips.push(s.ventilation === 0 ? 'Ventilation arrêtée' : s.ventilation >= 4 ? 'Ventilation auto' : `Ventilation ${s.ventilation}`)
-  const offset = s.offset_temp - 6
-  chips.push(`Consigne ${offset > 0 ? '+' : offset < 0 ? '−' : '±'}${Math.abs(offset)}`)
   if (s.window_alarm) chips.push('Fenêtre ouverte')
   if (s.alarm) chips.push('Alarme')
   return chips
@@ -145,7 +165,11 @@ class Card {
   private readonly label: HTMLInputElement
   private readonly pin: HTMLButtonElement
   private readonly linkButton: HTMLButtonElement
-  private readonly settings: Record<Setting, HTMLInputElement>
+  private readonly keepSwitch: HTMLInputElement
+  private readonly setpointOutput: HTMLOutputElement
+  /** Ventilation demandée, affichée jusqu'à ce que l'état relu la reflète (ou VENT_PENDING_MS). */
+  private ventPending: { level: number; until: number } | null = null
+  private ventTimer: number | undefined
 
   constructor(m: Module) {
     this.m = m
@@ -153,22 +177,27 @@ class Card {
     this.label = el<HTMLInputElement>('.label', this.el)
     this.pin = el<HTMLButtonElement>('.pin', this.el)
     this.linkButton = el<HTMLButtonElement>('.link-btn', this.el)
-    this.settings = {
-      auto_connect: el<HTMLInputElement>('[data-setting="auto_connect"]', this.el),
-      keep_connected: el<HTMLInputElement>('[data-setting="keep_connected"]', this.el),
-    }
+    this.keepSwitch = el<HTMLInputElement>('[data-setting="keep_connected"]', this.el)
+    this.setpointOutput = el<HTMLOutputElement>('.setpoint', this.el)
     this.bind()
     this.update(m)
   }
 
   /** Les commandes d'un même module partent dans l'ordre (ex. « + » puis « stop »). */
-  private enqueue(kind: string, action: string, button?: HTMLElement, quiet = false) {
+  private enqueue(
+    kind: string,
+    action: string,
+    button?: HTMLElement,
+    quiet = false,
+    onSent?: (r: CommandResult) => void,
+  ) {
     button?.setAttribute('aria-busy', 'true')
     const job = this.queue.then(async () => {
       try {
         const r = await api<CommandResult>('POST', `${modulePath(this.m.mac)}/command`, { kind, action })
+        onSent?.(r)
         if (!quiet) {
-          const text = ACTION_TEXT[`${kind}:${action}`] ?? `${kind} ${action}`
+          const text = actionText(kind, r.action ?? action)
           const reversed = r.frames.length > 1 ? ' (arrêt puis inversion)' : ''
           toast(`${displayName(this.m)} — ${text}${reversed} · ${r.total_ms} ms`)
         }
@@ -260,6 +289,25 @@ class Card {
       })
     }
 
+    // Ventilation : niveau affiché dès l'envoi, puis confirmé par l'état relu (~1,5 s après).
+    for (const button of this.el.querySelectorAll<HTMLButtonElement>('[data-vent]')) {
+      const level = Number(button.dataset.vent)
+      button.addEventListener('click', () => {
+        this.enqueue('vent', String(level), button, false, () => {
+          this.ventPending = { level, until: Date.now() + VENT_PENDING_MS }
+          window.clearTimeout(this.ventTimer)
+          this.ventTimer = window.setTimeout(() => this.renderComfort(), VENT_PENDING_MS)
+          this.renderComfort()
+        })
+      })
+    }
+
+    // Température : chaque clic décale la consigne d'un cran. Le serveur part de la consigne en
+    // vigueur (relue sur le module si besoin) : jamais d'une valeur supposée.
+    for (const button of this.el.querySelectorAll<HTMLButtonElement>('[data-setpoint]')) {
+      button.addEventListener('click', () => this.enqueue('temp', button.dataset.setpoint!, button))
+    }
+
     // « Se connecter » / « Se déconnecter » : mode « Maintenir la connexion » uniquement.
     this.linkButton.addEventListener('click', async () => {
       const action = this.m.status === 'connected' || wanted(this.m) ? 'disconnect' : 'connect'
@@ -273,19 +321,18 @@ class Card {
       }
     })
 
-    for (const [setting, input] of Object.entries(this.settings) as [Setting, HTMLInputElement][]) {
-      input.addEventListener('change', async () => {
-        input.setAttribute('aria-busy', 'true')
-        try {
-          await api('PATCH', modulePath(this.m.mac), { [setting]: input.checked })
-        } catch (e) {
-          this.update(this.m) // réaffiche le réglage en vigueur
-          toast(`${displayName(this.m)} — ${e instanceof Error ? e.message : String(e)}`, true)
-        } finally {
-          input.removeAttribute('aria-busy')
-        }
-      })
-    }
+    const keep = this.keepSwitch
+    keep.addEventListener('change', async () => {
+      keep.setAttribute('aria-busy', 'true')
+      try {
+        await api('PATCH', modulePath(this.m.mac), { keep_connected: keep.checked })
+      } catch (e) {
+        this.update(this.m) // réaffiche le réglage en vigueur
+        toast(`${displayName(this.m)} — ${e instanceof Error ? e.message : String(e)}`, true)
+      } finally {
+        keep.removeAttribute('aria-busy')
+      }
+    })
 
     this.pin.addEventListener('click', async () => {
       try {
@@ -329,16 +376,13 @@ class Card {
     statusText.textContent = m.status === 'disconnected' && wanted(m) ? 'Reconnexion…' : STATUS_TEXT[m.status]
     statusText.title = m.error ?? ''
 
-    // Connexion auto : pas de déconnexion possible ; sans maintien, chaque commande se connecte seule.
-    this.linkButton.hidden = !m.keep_connected || m.auto_connect
+    // Sans maintien, chaque commande se connecte seule : pas de bouton de connexion.
+    this.linkButton.hidden = !m.keep_connected
     if (wanted(m) || m.status === 'connected') this.linkButton.textContent = 'Se déconnecter'
     else this.linkButton.textContent = m.status === 'connecting' ? 'Connexion…' : 'Se connecter'
     this.linkButton.disabled = m.status === 'connecting' && !wanted(m)
 
-    this.settings.auto_connect.checked = m.auto_connect
-    // La connexion auto implique le maintien : affiché coché, et non modifiable tant qu'elle est active.
-    this.settings.keep_connected.checked = m.keep_connected || m.auto_connect
-    this.settings.keep_connected.disabled = m.auto_connect
+    this.keepSwitch.checked = m.keep_connected
     el('.mode-hint', this.el).textContent = modeHint(m)
 
     for (const button of this.el.querySelectorAll<HTMLButtonElement>('[data-blind]')) {
@@ -348,9 +392,30 @@ class Card {
     el('.rssi', this.el).textContent = m.rssi === null ? '' : `${m.rssi} dBm`
     el('.latency', this.el).textContent = m.last_ms === null ? '' : `· ${m.last_ms} ms`
 
-    const hvac = el<HTMLDivElement>('.hvac', this.el)
-    hvac.replaceChildren(
-      ...(m.state ? hvacChips(m.state) : []).map((text) => {
+    this.renderComfort()
+  }
+
+  /** Ventilation, consigne et état de la zone, tels que relus sur le module. */
+  private renderComfort() {
+    const s = this.m.state
+    const ventState = s ? Math.min(s.ventilation, 4) : null
+    if (this.ventPending && (Date.now() >= this.ventPending.until || this.ventPending.level === ventState)) {
+      this.ventPending = null // l'état relu fait foi
+    }
+    const vent = this.ventPending?.level ?? ventState
+    for (const button of this.el.querySelectorAll<HTMLButtonElement>('[data-vent]')) {
+      button.setAttribute('aria-pressed', String(Number(button.dataset.vent) === vent))
+    }
+
+    const offset = this.m.setpoint ?? s?.offset_temp ?? null
+    this.setpointOutput.textContent = offset === null ? '?' : offsetText(offset)
+    this.setpointOutput.title =
+      offset === null
+        ? 'Consigne inconnue tant que le module n’a pas été connecté : − et + la relisent d’abord.'
+        : 'Écart à la consigne de température de la zone, de −6 à +6 crans'
+
+    el<HTMLDivElement>('.hvac', this.el).replaceChildren(
+      ...(s ? hvacChips(s) : []).map((text) => {
         const chip = document.createElement('span')
         chip.className = 'chip'
         chip.textContent = text

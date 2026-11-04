@@ -98,7 +98,8 @@ def test_registry_round_trip(tmp_path):
     assert reg.modules == {}
     m = reg.seen(MAC.lower(), "ARC_1302", -60)
     assert m["mac"] == MAC
-    assert (m["pin"], m["pinned"], m["auto_connect"], m["keep_connected"]) == ("0000", False, False, False)
+    assert (m["pin"], m["pinned"], m["keep_connected"]) == ("0000", False, False)
+    assert "auto_connect" not in m
     reg.update(MAC, label="Mon bureau", keep_connected=True)
     reg.save()
 
@@ -107,6 +108,21 @@ def test_registry_round_trip(tmp_path):
     assert again.get("arc_1302") is again.get(MAC.lower())
     assert again.get("inconnu") is None
     assert json.loads(path.read_text(encoding="utf-8"))["modules"][0]["label"] == "Mon bureau"
+
+
+def test_registry_migrates_auto_connect_to_keep_connected(tmp_path):
+    """« Connexion auto » (jusqu'à la 1.2.1) retirée : ces modules passent en « Maintenir la connexion »."""
+    path = tmp_path / "modules.json"
+    path.write_text(json.dumps({"modules": [
+        {"mac": MAC, "name": "ARC_1302", "auto_connect": True, "keep_connected": False},
+        {"mac": "AA:BB:CC:DD:EE:02", "name": "ARC_1301", "auto_connect": False, "keep_connected": False},
+    ]}), encoding="utf-8")
+    reg = arcomlib.Registry(path)
+    assert reg.get(MAC)["keep_connected"] is True
+    assert reg.get("ARC_1301")["keep_connected"] is False
+    reg.save()
+    saved = json.loads(path.read_text(encoding="utf-8"))["modules"]
+    assert all("auto_connect" not in m for m in saved)
 
 
 def test_registry_keeps_name_when_advertisement_has_none(tmp_path):

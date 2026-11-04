@@ -19,7 +19,7 @@
         </svg>
         <div>
           <h1>Arcom</h1>
-          <p>Éclairage et stores</p>
+          <p>Éclairage, stores et confort</p>
         </div>
       </div>
       <div class="topbar-actions">
@@ -107,14 +107,32 @@
           </div>
         </div>
 
-        <div class="hvac"></div>
+        <div class="comfort">
+          <div class="control-row">
+            <span class="row-label">Ventilation</span>
+            <div class="segmented compact">
+              <button type="button" data-vent="0" aria-pressed="false" aria-label="Ventilation arrêtée" title="Arrêter la ventilation">Arrêt</button>
+              <button type="button" data-vent="1" aria-pressed="false" aria-label="Ventilation 1">1</button>
+              <button type="button" data-vent="2" aria-pressed="false" aria-label="Ventilation 2">2</button>
+              <button type="button" data-vent="3" aria-pressed="false" aria-label="Ventilation 3">3</button>
+              <button type="button" data-vent="4" aria-pressed="false" aria-label="Ventilation automatique" title="Ventilation automatique">Auto</button>
+            </div>
+          </div>
+
+          <div class="control-row">
+            <span class="row-label">Température</span>
+            <div class="segmented stepper">
+              <button type="button" data-setpoint="down" aria-label="Baisser la consigne de température d'un cran" title="Baisser d'un cran">−</button>
+              <output class="setpoint" aria-live="polite"></output>
+              <button type="button" data-setpoint="up" aria-label="Monter la consigne de température d'un cran" title="Monter d'un cran">+</button>
+            </div>
+          </div>
+
+          <div class="hvac"></div>
+          <p class="comfort-hint">Ventilation et température valent pour toute la zone du module.</p>
+        </div>
 
         <div class="link-settings">
-          <label class="switch" title="Se connecter dès le démarrage et rester connecté en permanence (pas de déconnexion possible)">
-            <input type="checkbox" role="switch" data-setting="auto_connect" />
-            <span class="track" aria-hidden="true"></span>
-            Connexion auto
-          </label>
           <label class="switch" title="Rester connecté entre les commandes, jusqu'à « Se déconnecter »">
             <input type="checkbox" role="switch" data-setting="keep_connected" />
             <span class="track" aria-hidden="true"></span>

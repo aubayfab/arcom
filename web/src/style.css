@@ -630,6 +630,44 @@ main {
   font-size: 12px;
 }
 
+/* --- Confort (ventilation, consigne) : vaut pour toute la zone du module ------------ */
+
+.comfort {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* Carte étroite : les boutons de ventilation passent sous leur libellé. */
+.comfort .control-row {
+  flex-wrap: wrap;
+}
+
+.segmented.compact button {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 9px;
+  font-size: 13px;
+}
+
+.stepper .setpoint {
+  display: grid;
+  place-items: center;
+  min-width: 52px;
+  border-inline: 1px solid var(--border);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+}
+
+.comfort-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 /* --- Toast ----------------------------------------------------------------------- */
 
 .toast {

@@ -170,13 +170,14 @@ Rien à installer : tout est dans ce dossier. Outil non officiel.
    du plus proche au plus lointain. Mettez le vôtre en favori avec l'étoile ★ (il passe en
    tête de liste), puis cliquez sur son titre pour lui donner un nom (« Mon bureau »…).
 
-   CONNEXION : en bas de chaque carte, deux interrupteurs, désactivés au départ.
-   - Aucun : chaque commande se connecte au module (3 à 5 secondes), agit, puis le libère
+   CONNEXION : en bas de chaque carte, un interrupteur, désactivé au départ.
+   - Désactivé : chaque commande se connecte au module (3 à 5 secondes), agit, puis le libère
      pour les autres (un module n'accepte qu'une connexion à la fois).
    - « Maintenir la connexion » : le module reste connecté pour enchaîner les commandes,
      jusqu'à ce que vous cliquiez sur « Se déconnecter ».
-   - « Connexion auto » : connecté automatiquement et en permanence, commandes immédiates ;
-     pas de déconnexion possible tant qu'elle est activée.
+
+   CONFORT : ventilation et température (consigne, − et + d'un cran) de chaque carte valent
+   pour toute la zone du module.
 
 3. RACCOURCIS (conseillé)
    Double-cliquer sur « Creer les raccourcis » : icône sur le Bureau et dans le menu

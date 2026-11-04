@@ -15,12 +15,10 @@
         tools:targetApi="s" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
-    <!-- Service qui garde les liaisons ouvertes (connexion auto, maintien, commandes des widgets). -->
+    <!-- Service qui garde les liaisons ouvertes (maintien de la connexion, commandes des widgets). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Reconnexion des modules en connexion auto au démarrage du téléphone. -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".ArcomApp"
@@ -58,15 +56,6 @@
             android:name=".LinkService"
             android:exported="false"
             android:foregroundServiceType="connectedDevice|shortService" />
-
-        <receiver
-            android:name=".BootReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
-            </intent-filter>
-        </receiver>
 
         <receiver
             android:name=".RemoteWidget"

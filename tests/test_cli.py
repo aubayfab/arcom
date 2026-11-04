@@ -18,8 +18,8 @@ from arcom_cli import Op
     (["connect"], Op("link", "connect")),
     (["keep", "on"], Op("set", "keep_connected", True)),
     (["maintien", "non"], Op("set", "keep_connected", False)),
-    (["auto", "OFF"], Op("set", "auto_connect", False)),
     (["light", "ON"], Op("cmd", "light", "on")),
+    (["auto", "on"], Op("cmd", "auto", "on")),  # « Connexion auto » retirée : commande inconnue
 ])
 def test_repl_parse(words, op):
     assert arcom_cli.repl_parse(words) == op
@@ -33,7 +33,6 @@ def test_repl_parse_rejects_bad_switch(capsys):
 @pytest.mark.parametrize(("module", "text"), [
     ({}, "ponctuel"),
     ({"keep_connected": True}, "maintien"),
-    ({"auto_connect": True, "keep_connected": True}, "auto"),
 ])
 def test_mode_text(module, text):
     assert arcom_cli.mode_text(module) == text
@@ -64,7 +63,11 @@ def test_list_survives_redirected_cp1252_output(monkeypatch, tmp_path):
     assert "? ARC_1302" in out.buffer.getvalue().decode("cp1252")
 
 
-def test_invalid_action_is_reported_before_connecting(monkeypatch):
-    monkeypatch.setattr("sys.argv", ["arcom", "--direct", "ARC_1302", "light", "dim"])
-    with pytest.raises(SystemExit, match="Action lumière inconnue"):
+@pytest.mark.parametrize(("words", "error"), [
+    (["light", "dim"], "Action lumière inconnue"),
+    (["auto", "on"], "Catégorie inconnue"),  # « Connexion auto » retirée
+])
+def test_invalid_action_is_reported_before_connecting(monkeypatch, words, error):
+    monkeypatch.setattr("sys.argv", ["arcom", "--direct", "ARC_1302", *words])
+    with pytest.raises(SystemExit, match=error):
         arcom_cli.main()

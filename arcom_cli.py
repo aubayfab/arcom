@@ -14,16 +14,14 @@ module. Sinon, connexion directe (1,5 à 5 s), puis déconnexion.
     python arcom_cli.py ARC_1302 temp 6            # offset de consigne 0..12 (6 = neutre)
     python arcom_cli.py ARC_1302 occ on
     python arcom_cli.py ARC_1302 keep on           # « Maintenir la connexion » (alias : maintien)
-    python arcom_cli.py ARC_1302 auto on           # « Connexion auto »
     python arcom_cli.py ARC_1302 connect           # se connecter / se déconnecter (via le serveur,
     python arcom_cli.py ARC_1302 disconnect        #   ou en mode interactif)
     python arcom_cli.py ARC_1302                   # mode interactif
 
-Connexion, réglée par module (« keep » et « auto » sont désactivés par défaut) :
+Connexion, réglée par module (« keep », désactivé par défaut) :
     par défaut   chaque commande se connecte, envoie la trame, puis libère le module ; un appui
                  maintenu (light up/down, blind rot_up/rot_down) garde la liaison jusqu'à son stop
     keep on      la connexion reste ouverte entre les commandes, jusqu'à « disconnect »
-    auto on      connecté en permanence (dès le démarrage du serveur) ; « disconnect » refusé
 
 Options : --groups 13 (groupes 1 et 3 ; défaut tous)  --pin 1234 (défaut 0000)
           --direct (connexion BLE sans le serveur ; impossible tant que server.py tient le module)
@@ -45,7 +43,7 @@ import arcomlib
 # 127.0.0.1 et non « localhost » : sous Windows, localhost tente d'abord ::1 et perd ~2 s.
 PORT = int(os.environ.get("ARCOM_PORT", 8787))
 
-SETTINGS = {"auto": "auto_connect", "keep": "keep_connected", "maintien": "keep_connected"}
+SETTINGS = {"keep": "keep_connected", "maintien": "keep_connected"}
 SWITCH = {"on": True, "oui": True, "1": True, "true": True, "off": False, "non": False, "0": False, "false": False}
 LINK_ACTIONS = ("connect", "disconnect")
 STATUS_TEXT = {"connected": "connecté", "connecting": "connexion…", "disconnected": "déconnecté",
@@ -67,8 +65,6 @@ class Op(NamedTuple):
 
 
 def mode_text(m: dict) -> str:
-    if m.get("auto_connect"):
-        return "auto"
     return "maintien" if m.get("keep_connected") else "ponctuel"
 
 
@@ -149,7 +145,7 @@ async def direct_send(args):
 
 class DirectLink:
     """Mode interactif sans serveur, mêmes règles que lui : la liaison est libérée après chaque
-    commande, sauf maintien ou connexion auto, ou appui maintenu en attente de son « stop »."""
+    commande, sauf maintien de la connexion, ou appui maintenu en attente de son « stop »."""
 
     def __init__(self, m: dict, reg: arcomlib.Registry):
         self.m, self.reg = m, reg
@@ -158,12 +154,8 @@ class DirectLink:
         self.gesture = False
 
     @property
-    def auto(self) -> bool:
-        return bool(self.m.get("auto_connect"))
-
-    @property
     def keep(self) -> bool:
-        return self.auto or bool(self.m.get("keep_connected"))
+        return bool(self.m.get("keep_connected"))
 
     async def ensure(self):
         if self.client is None or not self.client.is_connected:
@@ -181,7 +173,7 @@ class DirectLink:
                 pass
 
     async def release(self):
-        if not (self.auto or (self.keep and self.held) or self.gesture):
+        if not ((self.keep and self.held) or self.gesture):
             await self.drop()
 
     async def send(self, kind: str, action: str, groups, pin: str) -> str:
@@ -208,22 +200,18 @@ class DirectLink:
             self.held = True
             await self.ensure()
             return "connecté"
-        if self.auto:
-            return "connexion auto active : « auto off » pour pouvoir déconnecter"
         self.held = False
         await self.drop()
         return "déconnecté"
 
     async def configure(self, key: str, value: bool) -> str:
         """Activer connecte tout de suite, désactiver libère le module (comme le serveur)."""
-        was_auto, was_keep = self.auto, self.keep
+        was_keep = self.keep
         self.m[key] = value
         self.reg.save()
-        if not self.keep:
-            self.held = False
-        elif (self.auto and not was_auto) or not was_keep:
-            self.held = True
-        if self.auto or (self.keep and self.held):
+        if self.keep != was_keep:
+            self.held = self.keep
+        if self.keep and self.held:
             await self.ensure()
         else:
             await self.release()
@@ -248,8 +236,6 @@ async def direct_repl(args):
     link = DirectLink(m, reg)
     print(f"Connexion : {mode_text(m)}")
     try:
-        if link.auto:
-            await link.ensure()
         while True:
             try:
                 op = repl_parse((await asyncio.to_thread(input, "arcom> ")).split())
@@ -323,7 +309,7 @@ def cmd_action(args, use_server: bool):
 
 
 def cmd_setting(target: str, key: str, value: bool, use_server: bool):
-    """« auto on|off », « keep on|off » : appliqué tout de suite par le serveur, sinon enregistré."""
+    """« keep on|off » : appliqué tout de suite par le serveur, sinon enregistré."""
     if use_server:
         try:
             m = call("PATCH", module_path(target), {key: value})
@@ -354,7 +340,7 @@ def cmd_link(target: str, action: str, use_server: bool):
 REPL_HELP = """\
   light on|off|up|down|stop     blind up|down|stop|rot_up|rot_down|rot_stop
   vent 0..4    temp 0..12    occ on|off    groups 13|all
-  keep on|off    auto on|off    connect    disconnect    help    quit"""
+  keep on|off    connect    disconnect    help    quit"""
 
 
 def repl_parse(words: list[str]) -> Op:
@@ -442,7 +428,7 @@ def main():
             stream.reconfigure(errors="replace")
     p = argparse.ArgumentParser(description="Télécommande BLE pour modules Arcom.",
                                 usage="%(prog)s [options] (scan | list | <cible> [<catégorie> <action>"
-                                      " | keep|auto on|off | connect | disconnect])")
+                                      " | keep on|off | connect | disconnect])")
     p.add_argument("--version", action=ShowVersion)
     p.add_argument("--pin", default=None, help="code PIN à 4 chiffres (défaut : celui du registre, sinon 0000)")
     p.add_argument("--groups", default=None, help="groupes à piloter, ex. 13 (défaut : tous)")

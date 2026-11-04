@@ -49,7 +49,6 @@ body:
       options:
         - Aucun (par défaut)
         - Maintenir la connexion
-        - Connexion auto
         - Je ne sais pas
   - type: textarea
     id: journal

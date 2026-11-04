@@ -93,19 +93,18 @@ Installée avec pip, la ligne de commande partage la liste des modules de l'appl
 
 ### Connexion aux modules
 
-Un module n'accepte qu'une liaison Bluetooth à la fois. Chaque module a donc deux réglages,
-**désactivés par défaut** (interrupteurs en bas de chaque carte, sur PC comme sur Android ;
-`keep` et `auto` en ligne de commande) :
+Un module n'accepte qu'une liaison Bluetooth à la fois. Chaque module a donc un réglage,
+**désactivé par défaut** (interrupteur en bas de chaque carte, sur PC comme sur Android ; `keep`
+en ligne de commande) :
 
 | Réglage | Comportement |
 |---|---|
-| aucun (défaut) | Chaque commande se connecte (3,5 à 5,5 s), envoie la trame, puis **libère le module** pour les autres. Un appui maintenu (intensité − / +, orientation des lames) garde la liaison jusqu'au relâchement. |
+| désactivé (défaut) | Chaque commande se connecte (3,5 à 5,5 s), envoie la trame, puis **libère le module** pour les autres. Un appui maintenu (intensité − / +, orientation des lames) garde la liaison jusqu'au relâchement. |
 | **Maintenir la connexion** | Une fois connecté, le module reste connecté pour enchaîner les commandes, et se reconnecte s'il décroche, **jusqu'à « Se déconnecter »**. |
-| **Connexion auto** | Connecté automatiquement et en permanence : commandes immédiates. **Pas de déconnexion possible** tant qu'elle est active. |
 
-Désactiver un réglage libère aussitôt le module (sauf si « Maintenir la connexion » reste actif :
-la liaison en place est alors tenue jusqu'à « Se déconnecter »). L'étoile ★ ne fait que classer
-les favoris en tête de liste.
+Aucun module n'est connecté d'office, ni au lancement ni en arrière-plan : la première connexion
+vient toujours d'une commande ou de « Se connecter ». Désactiver le réglage libère aussitôt le
+module. L'étoile ★ ne fait que classer les favoris en tête de liste.
 
 Un module ne pilote que **sa** zone, et le plus proche en ondes radio n'est pas forcément celui de
 votre pièce : renommer les cartes au fur et à mesure aide à s'y retrouver.
@@ -117,6 +116,12 @@ votre pièce : renommer les cartes au fur et à mesure aide à s'y retrouver.
 - **Stores** : un clic sur ▲ ou ▼ lance la course (bouton surligné), un second clic l'arrête ;
   ■ arrête aussi. **Appui long** sur ▲ / ▼ : orientation des lames tant qu'on maintient. Inverser en
   pleine course est sans risque : l'arrêt est envoyé d'abord.
+- **Ventilation** : Arrêt, 1, 2, 3 ou Auto ; le niveau en vigueur est surligné.
+- **Température** : − et + décalent la consigne d'un cran, de −6 à +6 (±0 : consigne normale de
+  la zone). Si la consigne n'est pas encore connue, elle est relue sur le module avant d'être
+  décalée.
+- Ventilation et température valent pour **toute la zone** du module. Leur état est relu sur le
+  module à chaque connexion et après chaque réglage, avec l'occupation et les alarmes.
 - **Se connecter / Se déconnecter** : à côté de l'état, en mode « Maintenir la connexion ».
 - **Nom** : cliquer sur le titre d'une carte pour la renommer. **Rechercher** : ajoute les modules
   à portée.
@@ -124,14 +129,13 @@ votre pièce : renommer les cartes au fur et à mesure aide à s'y retrouver.
 
 ### Sur Android
 
-Les mêmes commandes, plus un panneau **Confort** (ventilation, consigne, présence) qui affiche
-l'état relu sur le module ; ces réglages valent pour toute la zone.
+Les mêmes commandes, la ventilation et la consigne étant regroupées dans un panneau **Confort**
+repliable, qui règle aussi la présence ; ces réglages valent pour toute la zone.
 
-- **Connexion auto** : la liaison tient appli fermée et après un redémarrage du téléphone ; Android
-  l'impose, une notification discrète « Connexion aux modules » le signale. Hors de portée, le
-  téléphone guette le module et s'y reconnecte dès son retour.
 - **Maintenir la connexion** : la liaison tient appli fermée, jusqu'à « Se déconnecter » sur la
-  carte, ou « Tout déconnecter » dans la notification.
+  carte, ou « Tout déconnecter » dans la notification discrète « Connexion aux modules » (imposée
+  par Android tant qu'une liaison est tenue). Hors de portée, le téléphone guette le module et s'y
+  reconnecte dès son retour.
 - Les modules du téléphone sont indépendants de ceux du PC.
 
 **Widgets** : appui long sur l'écran d'accueil › Widgets › Télécommande pour modules Arcom.
@@ -160,7 +164,6 @@ arcom ARC_1302 vent 4            # ventilation 0..4 (4 = auto)
 arcom ARC_1302 temp 6            # décalage de consigne 0..12 (6 = neutre)
 arcom ARC_1302 occ on            # occupation
 arcom ARC_1302 keep on           # « Maintenir la connexion » (alias : maintien)
-arcom ARC_1302 auto on           # « Connexion auto »
 arcom ARC_1302 connect           # se connecter / se déconnecter
 arcom ARC_1302 disconnect
 arcom ARC_1302                   # mode interactif (mêmes commandes)

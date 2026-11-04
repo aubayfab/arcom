@@ -141,7 +141,7 @@ class Registry:
     """modules.json : modules connus, indexés par MAC (un module connecté n'émet plus, on garde sa MAC).
 
     Par module : label (nom affiché), pinned (favori ★, simple classement), pin (code à 4 chiffres),
-    auto_connect (« Connexion auto ») et keep_connected (« Maintenir la connexion »), faux par défaut.
+    keep_connected (« Maintenir la connexion »), faux par défaut.
     """
 
     def __init__(self, path: Path = REGISTRY_PATH):
@@ -155,6 +155,10 @@ class Registry:
             self.modules = {m["mac"].upper(): m for m in data.get("modules", [])}
         except FileNotFoundError:
             self.modules = {}
+        for m in self.modules.values():
+            # « Connexion auto » (jusqu'à la 1.2.1) : retirée, le module garde la liaison en mode maintien.
+            if m.pop("auto_connect", False):
+                m["keep_connected"] = True
 
     def save(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -176,7 +180,7 @@ class Registry:
     def seen(self, mac: str, name: str | None, rssi: int | None) -> dict:
         m = self.modules.setdefault(mac.upper(), {"mac": mac.upper(), "name": name, "label": "",
                                                   "pinned": False, "pin": DEFAULT_PIN,
-                                                  "auto_connect": False, "keep_connected": False})
+                                                  "keep_connected": False})
         if name:
             m["name"] = name
         if rssi is not None:

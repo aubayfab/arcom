@@ -10,9 +10,9 @@ import java.io.FileNotFoundException
 import java.io.IOException
 
 /**
- * [pinned] : favori ★ (en tête de liste, sans effet sur la connexion). [autoConnect] : « Connexion
- * auto », connecté en permanence. [keepConnected] : « Maintenir la connexion » jusqu'à « Se
- * déconnecter ». Sans l'un ni l'autre (défaut), chaque commande se connecte puis libère le module.
+ * [pinned] : favori ★ (en tête de liste, sans effet sur la connexion). [keepConnected] : « Maintenir
+ * la connexion » jusqu'à « Se déconnecter » ; sinon (défaut), chaque commande se connecte puis
+ * libère le module.
  */
 class ModuleInfo(
     val mac: String,
@@ -22,7 +22,6 @@ class ModuleInfo(
     var pin: String = Protocol.DEFAULT_PIN,
     var rssi: Int? = null,
     var lastSeen: Long? = null,
-    var autoConnect: Boolean = false,
     var keepConnected: Boolean = false,
 ) {
     val displayName: String get() = label.ifBlank { name ?: mac }
@@ -61,8 +60,8 @@ class Registry(file: File) {
                     pin = o.str("pin") ?: Protocol.DEFAULT_PIN,
                     rssi = if (o.isNull("rssi")) null else o.getInt("rssi"),
                     lastSeen = if (o.isNull("last_seen")) null else o.getLong("last_seen"),
-                    autoConnect = o.optBoolean("auto_connect"),
-                    keepConnected = o.optBoolean("keep_connected"),
+                    // « Connexion auto » (jusqu'à la 1.2.1) : retirée, le module passe en maintien.
+                    keepConnected = o.optBoolean("keep_connected") || o.optBoolean("auto_connect"),
                 )
             }
         } catch (e: JSONException) {
@@ -79,7 +78,6 @@ class Registry(file: File) {
                 put("label", m.label)
                 put("pinned", m.pinned)
                 put("pin", m.pin)
-                put("auto_connect", m.autoConnect)
                 put("keep_connected", m.keepConnected)
                 m.rssi?.let { put("rssi", it) }
                 m.lastSeen?.let { put("last_seen", it) }

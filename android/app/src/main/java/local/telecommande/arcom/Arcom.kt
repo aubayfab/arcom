@@ -91,8 +91,7 @@ object Arcom {
         if (busy > 0) return true
         if (!Permissions.canConnect(context)) return false
         val active = setOf(LinkStatus.CONNECTING, LinkStatus.WAITING, LinkStatus.CONNECTED)
-        return links.values.any { it.status in active || it.wanted } ||
-            registry.modules.values.any { it.autoConnect }
+        return links.values.any { it.status in active || it.wanted }
     }
 
     /** Toutes les 10 s : (re)connecte ce qui doit l'être, entretient les liaisons tenues, libère les autres. */
@@ -164,22 +163,21 @@ object Arcom {
         }
     }
 
-    /** « Se déconnecter » : rend la main (impossible en connexion auto). */
+    /** « Se déconnecter » : rend la main. */
     fun disconnect(mac: String) {
         val link = link(mac)
-        if (link.auto) return
         link.held = false
         link.drop()
     }
 
-    /** « Tout déconnecter » (notification) : tout sauf les modules en connexion auto. */
+    /** « Tout déconnecter » (notification). */
     fun disconnectAll() {
         for (m in registry.modules.values) disconnect(m.mac)
     }
 
     /** Une liaison au moins peut être rendue (« Tout déconnecter » a un effet). */
-    fun disconnectable(): Boolean = registry.modules.values.any { m ->
-        !m.autoConnect && links[m.mac]?.let { it.wanted || it.status in setOf(LinkStatus.CONNECTING, LinkStatus.CONNECTED) } == true
+    fun disconnectable(): Boolean = links.values.any {
+        it.wanted || it.status in setOf(LinkStatus.CONNECTING, LinkStatus.CONNECTED)
     }
 
     fun update(
@@ -187,33 +185,23 @@ object Arcom {
         label: String? = null,
         pin: String? = null,
         pinned: Boolean? = null,
-        autoConnect: Boolean? = null,
         keepConnected: Boolean? = null,
     ) {
         val m = registry.get(mac) ?: return
         val link = link(mac)
-        val wasAuto = link.auto
         val wasKeep = link.keep
         label?.let { m.label = it.trim().take(60) }
         pin?.let { m.pin = it }
         pinned?.let { m.pinned = it }
-        autoConnect?.let { m.autoConnect = it }
         keepConnected?.let { m.keepConnected = it }
         registry.save()
-        if (link.auto != wasAuto || link.keep != wasKeep) applyLinkSettings(link, wasAuto, wasKeep)
+        if (link.keep != wasKeep) {
+            // Activer le maintien connecte tout de suite, le désactiver libère le module.
+            link.held = link.keep
+            if (link.wanted) connectNow(link) else scope.launch { link.release() }
+        }
         changed()
         Widgets.renderAll(context)
-    }
-
-    /** Après un changement de réglage : activer connecte tout de suite, désactiver libère le module. */
-    private fun applyLinkSettings(link: Link, wasAuto: Boolean, wasKeep: Boolean) {
-        link.held = when {
-            !link.keep -> false
-            (link.auto && !wasAuto) || !wasKeep -> true
-            // Connexion auto retirée, maintien gardé : la liaison en place reste tenue jusqu'à « Se déconnecter ».
-            else -> link.alive || link.status == LinkStatus.CONNECTING
-        }
-        if (link.wanted) connectNow(link) else scope.launch { link.release() }
     }
 
     /** Résumé pour la notification du service. */
@@ -221,7 +209,7 @@ object Arcom {
         if (!bluetoothOn) return "Bluetooth désactivé"
         val parts = registry.modules.values.mapNotNull { m ->
             when (links[m.mac]?.status) {
-                LinkStatus.CONNECTED -> "${m.displayName} : connecté" + if (m.autoConnect) " (auto)" else ""
+                LinkStatus.CONNECTED -> "${m.displayName} : connecté"
                 LinkStatus.CONNECTING -> "${m.displayName} : connexion…"
                 LinkStatus.WAITING -> "${m.displayName} : en attente du module"
                 else -> null

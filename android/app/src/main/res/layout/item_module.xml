@@ -350,7 +350,7 @@
             android:text="@string/comfort_hint" />
     </LinearLayout>
 
-    <!-- Connexion : les deux réglages sont désactivés par défaut (chaque commande se connecte puis libère le module) -->
+    <!-- Connexion : maintien désactivé par défaut (chaque commande se connecte puis libère le module) -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
@@ -358,18 +358,11 @@
         android:background="@color/border" />
 
     <Switch
-        android:id="@+id/auto_connect"
-        style="@style/LinkSwitch"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="@string/auto_connect" />
-
-    <Switch
         android:id="@+id/keep_connected"
         style="@style/LinkSwitch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
         android:text="@string/keep_connected" />
 
     <TextView

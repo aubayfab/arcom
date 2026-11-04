@@ -21,8 +21,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Service de premier plan : tant qu'une liaison est ouverte ou voulue (connexion auto, maintien de
- * la connexion, commande en cours) ou qu'une commande de widget est en cours, il garde le processus
+ * Service de premier plan : tant qu'une liaison est ouverte ou voulue (maintien de la connexion,
+ * commande en cours) ou qu'une commande de widget est en cours, il garde le processus
  * en vie, sinon Android le gèlerait et les liaisons tomberaient. Il s'arrête seul ensuite.
  *
  * Les boutons des widgets le démarrent directement (PendingIntent.getForegroundService) : Android
@@ -115,7 +115,7 @@ class LinkService : Service() {
         }
     }
 
-    /** [disconnectable] : « Tout déconnecter » aurait un effet (la connexion auto ne se déconnecte pas). */
+    /** [disconnectable] : « Tout déconnecter » aurait un effet. */
     private fun buildNotification(text: String, disconnectable: Boolean): Notification {
         val open = PendingIntent.getActivity(
             this, 0, Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),

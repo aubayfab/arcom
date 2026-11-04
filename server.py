@@ -3,16 +3,18 @@
     API REST + WebSocket sur http://127.0.0.1:8787/api/…  (utilisée par web/ et par arcom_cli.py)
     Sert aussi l'interface compilée (web/dist) si elle existe : http://127.0.0.1:8787/
 
-Deux réglages par module (modules.json), désactivés par défaut :
-- Aucun : chaque commande se connecte, envoie la trame, puis libère le module. Un appui maintenu
+Un réglage par module (modules.json), désactivé par défaut :
+- Désactivé : chaque commande se connecte, envoie la trame, puis libère le module. Un appui maintenu
   (intensité, lames) garde la liaison jusqu'à son « stop ». Un module n'accepte qu'une liaison à
   la fois : il reste ainsi libre pour les autres (téléphone, collègues).
 - « Maintenir la connexion » (keep_connected) : une fois connecté (« Se connecter » ou première
   commande), le module reste tenu, et reconnecté s'il décroche, jusqu'à « Se déconnecter ».
-- « Connexion auto » (auto_connect) : connecté en permanence, dès le démarrage ; pas de déconnexion.
+Aucun module n'est connecté d'office, ni au démarrage ni ensuite.
 Keep-alive des liaisons tenues : relecture de l'état (…c69) toutes les 10 s, comme l'app d'origine.
 Stores : une inversion de sens en pleine course envoie d'abord STOP puis attend 0,5 s
 (l'app d'origine l'imposait en désactivant le bouton opposé pendant la course).
+Consigne : « temp up|down » la décale d'un cran, à partir de la dernière consigne demandée (pas
+encore relue) ou de l'état du module, relu d'abord si la liaison n'était pas ouverte.
 
 Usage : python server.py [--host 127.0.0.1] [--port 8787]   (port aussi via ARCOM_PORT)
 """
@@ -39,6 +41,8 @@ HVAC_REFLECT_S = 1.5        # délai avant que …c69 reflète une commande CVC 
 BLIND_REVERSE_PAUSE_S = 0.5  # temps mort moteur entre STOP et le sens opposé
 BLIND_MOTION_TTL_S = 120     # au-delà, le store est supposé arrivé en butée
 HOLD_MAX_S = 30              # appui maintenu dont le « stop » n'arrive pas (page fermée) : abandonné
+SETPOINT_HOLD_S = 10         # consigne demandée : base des crans suivants, le temps que …c69 la reflète
+SETPOINT_STEPS = {"up": 1, "down": -1}  # crans de consigne relatifs (« temp up|down »)
 # Interface compilée : à côté du script en développement, dans l'archive pour l'appli installée.
 DIST = Path(getattr(sys, "_MEIPASS", Path(__file__).parent)) / "web" / "dist"
 
@@ -63,9 +67,11 @@ class Link:
         self.pending = 0     # commandes en cours : le mode ponctuel ne libère qu'après la dernière
         self.gesture: float | None = None  # début d'un appui maintenu, en attente de son « stop »
         self.blind: dict[int, tuple[str, float]] = {}  # groupe -> (sens, début de course)
+        self.setpoint: tuple[int, float] | None = None  # consigne demandée (0..12, instant), pas encore relue
         # Les écritures sont ordonnées entre elles ; les lectures (keep-alive) ne les bloquent pas.
         self.write_lock = asyncio.Lock()
         self.read_lock = asyncio.Lock()
+        self.setpoint_lock = asyncio.Lock()  # deux crans de consigne rapprochés partent l'un de l'autre
         self._connect_task: asyncio.Task | None = None
         self._link_profile = None  # requête d'intervalle de connexion, à garder tant que la liaison vit
 
@@ -79,18 +85,14 @@ class Link:
         return m.get("label") or m.get("name") or self.mac
 
     @property
-    def auto(self) -> bool:
-        return bool(self.mgr.registry.modules.get(self.mac, {}).get("auto_connect"))
-
-    @property
     def keep(self) -> bool:
-        """Liaison gardée entre les commandes (« Maintenir la connexion », implicite en connexion auto)."""
-        return self.auto or bool(self.mgr.registry.modules.get(self.mac, {}).get("keep_connected"))
+        """Liaison gardée entre les commandes (« Maintenir la connexion »)."""
+        return bool(self.mgr.registry.modules.get(self.mac, {}).get("keep_connected"))
 
     @property
     def wanted(self) -> bool:
         """Liaison à tenir, et à rétablir si elle tombe."""
-        return self.auto or (self.keep and self.held)
+        return self.keep and self.held
 
     @property
     def busy(self) -> bool:
@@ -243,14 +245,24 @@ class Link:
             self.gesture = time.monotonic() if (kind, action) in arcomlib.HOLD_ACTIONS else None
 
     async def command(self, kind: str, action: str, groups, pin: str) -> dict:
+        """Envoie une commande ; renvoie l'action envoyée (cran de consigne résolu), les trames et la durée."""
         kind, action = kind.lower(), str(action).lower()
-        frames = self._frames(kind, action, groups, pin)
+        step = SETPOINT_STEPS.get(action) if kind == "temp" else None
+        frames = [] if step else self._frames(kind, action, groups, pin)  # valide avant de se connecter
         if self.keep:
             self.held = True
         t0 = time.perf_counter()
         self.pending += 1
         try:
-            await self._write(frames)
+            if kind == "temp":
+                async with self.setpoint_lock:
+                    if step:
+                        action = str(await self._next_setpoint(step))
+                        frames = self._frames(kind, action, groups, pin)
+                    await self._write(frames)
+                    self.setpoint = (int(action), time.monotonic())
+            else:
+                await self._write(frames)
         finally:
             self.pending -= 1
         ms = (time.perf_counter() - t0) * 1000
@@ -258,38 +270,65 @@ class Link:
         self._track(kind, action, groups)
         self.last_ms = round(ms)
         self.mgr.notify(self.mac)
-        self.mgr.spawn(self._settle(hvac=frames[-1][0][0] >= arcomlib.VENT))
-        return {"frames": [f.hex() for f, _ in frames], "ms": ms}
+        self.mgr.spawn(self._settle(hvac=frames[-1][0][0] >= arcomlib.VENT,
+                                    setpoint=self.setpoint if kind == "temp" else None))
+        return {"action": action, "frames": [f.hex() for f, _ in frames], "ms": ms}
 
-    async def _settle(self, hvac: bool):
+    def pending_setpoint(self) -> int | None:
+        """Consigne demandée que …c69 n'a pas encore reflétée (None au-delà de SETPOINT_HOLD_S)."""
+        if self.setpoint and time.monotonic() - self.setpoint[1] < SETPOINT_HOLD_S:
+            return self.setpoint[0]
+        return None
+
+    async def _next_setpoint(self, step: int) -> int:
+        """Consigne décalée d'un cran, bornée à 0..12.
+
+        Part de la consigne demandée juste avant, sinon de l'état du module : relu d'abord si la
+        liaison n'était pas ouverte (un autre appareil, ou la zone elle-même, a pu la changer).
+        """
+        base = self.pending_setpoint()
+        if base is None:
+            if not self.connected or self.state is None:
+                await self.ensure()
+                await self.refresh()
+            if self.state is None:
+                raise ConnectionError("consigne actuelle illisible, réessayez")
+            base = self.state["offset_temp"]
+        return max(0, min(12, base + step))
+
+    async def _settle(self, hvac: bool, setpoint: tuple[int, float] | None = None):
         """Après une commande : relit l'état CVC une fois répercuté, puis libère le module si besoin."""
         if hvac:
             self.pending += 1  # la liaison attend la relecture
             try:
-                await self.refresh(delay=HVAC_REFLECT_S)
+                if await self.refresh(delay=HVAC_REFLECT_S) and setpoint and self.setpoint is setpoint:
+                    self.setpoint = None  # l'état relu fait foi
+                    self.mgr.notify(self.mac)
             finally:
                 self.pending -= 1
         await self.release()
 
     # --- Lectures ------------------------------------------------------------------
 
-    async def refresh(self, delay: float = 0.0):
+    async def refresh(self, delay: float = 0.0) -> bool:
+        """Relit l'état CVC (sert aussi de keep-alive) ; False si la liaison est fermée ou la lecture impossible."""
         if delay:
             await asyncio.sleep(delay)
         client = self.client
         if client is None or not client.is_connected:
-            return
+            return False
         try:
             async with self.read_lock:
                 raw = await asyncio.wait_for(client.read_gatt_char(arcomlib.READ_COMMAND), READ_TIMEOUT_S)
         except Exception as e:
             log.info("%s : lecture d'état impossible (%s), liaison abandonnée", self.name, e)
             await self.drop()
-            return
+            return False
         state = arcomlib.parse_state(raw)
         if state != self.state:
             self.state = state
             self.mgr.notify(self.mac)
+        return state is not None
 
     async def _watch_points(self, client):
         """Journalise les points de donnée du module (sert à repérer fins de course, retours d'état…)."""
@@ -367,12 +406,12 @@ class Manager:
         return {
             "mac": mac, "name": m.get("name"), "label": m.get("label") or "",
             "pinned": bool(m.get("pinned")), "rssi": m.get("rssi"), "last_seen": m.get("last_seen"),
-            "auto_connect": bool(m.get("auto_connect")),
             "keep_connected": bool(m.get("keep_connected")),
             "held": link.held if link else False,
             "status": link.status if link else "disconnected",
             "error": link.error if link else None,
             "state": link.state if link else None,
+            "setpoint": link.pending_setpoint() if link else None,
             "last_ms": link.last_ms if link else None,
             "blind": link.blind_state() if link else None,
             "points": {f"0x{k:04x}": v for k, v in sorted(link.points.items())} if link else {},
@@ -514,10 +553,11 @@ async def command(request):
     except Exception as e:
         raise web.HTTPBadGateway(text=f"{link.name} : {e}")
     total_ms = (time.perf_counter() - t0) * 1000
-    log.info("%s : %s %s -> %s (%.0f ms)", link.name, body["kind"], body["action"],
+    log.info("%s : %s %s -> %s (%.0f ms)", link.name, body["kind"], result["action"],
              " puis ".join(result["frames"]), total_ms)
-    return web.json_response({"ok": True, "frame": result["frames"][-1], "frames": result["frames"],
-                              "write_ms": round(result["ms"]), "total_ms": round(total_ms)})
+    return web.json_response({"ok": True, "action": result["action"], "frame": result["frames"][-1],
+                              "frames": result["frames"], "write_ms": round(result["ms"]),
+                              "total_ms": round(total_ms)})
 
 
 @routes.post("/api/modules/{key}/connect")
@@ -539,46 +579,35 @@ async def connect(request):
 
 @routes.post("/api/modules/{key}/disconnect")
 async def disconnect(request):
-    """« Se déconnecter » : rend la main (refusé en connexion auto)."""
+    """« Se déconnecter » : rend la main."""
     mgr = mgr_of(request)
     m = mgr.resolve(request.match_info["key"])
     link = mgr.link(m["mac"])
-    if link.auto:
-        raise web.HTTPConflict(text=f"{link.name} : connexion auto active, désactivez-la pour déconnecter le module")
     link.held = False
     await link.drop()
     return web.json_response(mgr.public(m["mac"]))
 
 
-def apply_link_settings(mgr: Manager, link: Link, was_auto: bool, was_keep: bool):
-    """Après un changement de réglage : activer connecte tout de suite, désactiver libère le module."""
-    if not link.keep:
-        link.held = False
-    elif (link.auto and not was_auto) or not was_keep:
-        link.held = True
-    else:  # connexion auto retirée, maintien gardé : la liaison en place reste tenue jusqu'à « Se déconnecter »
-        link.held = link.connected or link.status == "connecting"
-    mgr.spawn(link.ensure() if link.wanted else link.release())
-
-
 @routes.patch("/api/modules/{key}")
 async def update(request):
-    """Nom affiché, favori (★, simple classement), connexion auto, maintien de la connexion."""
+    """Nom affiché, favori (★, simple classement), maintien de la connexion."""
     mgr = mgr_of(request)
     m = mgr.resolve(request.match_info["key"])
     body = await request.json()
     fields = {}
     if "label" in body:
         fields["label"] = str(body["label"]).strip()[:60]
-    for key in ("pinned", "auto_connect", "keep_connected"):
+    for key in ("pinned", "keep_connected"):
         if key in body:
             fields[key] = bool(body[key])
     link = mgr.link(m["mac"])
-    was_auto, was_keep = link.auto, link.keep
+    was_keep = link.keep
     mgr.registry.update(m["mac"], **fields)
     mgr.registry.save()
-    if (link.auto, link.keep) != (was_auto, was_keep):
-        apply_link_settings(mgr, link, was_auto, was_keep)
+    if link.keep != was_keep:
+        # Activer le maintien connecte tout de suite, le désactiver libère le module.
+        link.held = link.keep
+        mgr.spawn(link.ensure() if link.wanted else link.release())
     mgr.notify(m["mac"])
     return web.json_response(mgr.public(m["mac"]))
 

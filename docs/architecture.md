@@ -28,8 +28,13 @@ http://127.0.0.1:8787, lancé par `arcom_app.py` (icône près de l'horloge).
 - Ouvre et libère les liaisons selon les réglages de chaque module (voir « Connexion aux modules »
   dans le [README](../README.md)).
 - Relit l'état CVC des liaisons tenues toutes les 10 s (keep-alive, comme l'appli d'origine),
-  reconnecte les modules en connexion auto (ou en maintien, tant que « Se déconnecter » n'a pas été
-  demandé), et pousse chaque changement par WebSocket.
+  reconnecte les modules en maintien tant que « Se déconnecter » n'a pas été demandé, et pousse
+  chaque changement par WebSocket. Il ne se connecte jamais de lui-même à un module : ni au
+  démarrage, ni avant une première commande ou « Se connecter ».
+- Consigne : `temp up` / `temp down` la décale d'un cran (bornée à 0..12) à partir de la dernière
+  consigne demandée tant que le module ne l'a pas relue (10 s au plus), sinon de l'état relu, lu
+  d'abord si la liaison n'était pas ouverte. Deux clics rapides font donc bien deux crans, et un
+  cran ne part jamais d'une valeur supposée.
 - Chaque opération BLE a un délai maximal (3 s en écriture, 5 s en lecture) : une liaison morte est
   abandonnée puis rétablie, au lieu de bloquer les commandes suivantes.
 - Écritures et lectures ont des verrous séparés : le keep-alive ne retarde jamais une commande.
@@ -52,18 +57,19 @@ http://127.0.0.1:8787, lancé par `arcom_app.py` (icône près de l'horloge).
 | `GET /api/modules` | Modules connus, avec leur état |
 | `GET /api/modules/{nom\|mac}` | Un module |
 | `POST /api/scan` | Recherche des modules à portée |
-| `POST /api/modules/{nom\|mac}/command` | Commande : `{"kind": "light", "action": "off", "groups": [1, 3]}` |
-| `PATCH /api/modules/{nom\|mac}` | Réglages : `{"label": "…", "pinned": true, "auto_connect": false, "keep_connected": true}` |
+| `POST /api/modules/{nom\|mac}/command` | Commande : `{"kind": "light", "action": "off", "groups": [1, 3]}`, `{"kind": "vent", "action": "2"}`, `{"kind": "temp", "action": "up"}`… ; la réponse donne l'action envoyée (`"action": "7"` pour un cran de consigne) |
+| `PATCH /api/modules/{nom\|mac}` | Réglages : `{"label": "…", "pinned": true, "keep_connected": true}` |
 | `POST /api/modules/{nom\|mac}/connect` | Se connecter (409 sans « Maintenir la connexion ») |
-| `POST /api/modules/{nom\|mac}/disconnect` | Se déconnecter (409 en connexion auto) |
+| `POST /api/modules/{nom\|mac}/disconnect` | Se déconnecter |
 | `GET /api/ws` | WebSocket des changements d'état |
 | `GET /api/health` | Santé du serveur |
 | `POST /api/shutdown` | Arrêt propre |
 
 ## Données
 
-`modules.json` : registre partagé (MAC, nom, libellé, favori, PIN, `auto_connect`,
-`keep_connected`). Emplacement (voir `arcomlib.data_dir`) :
+`modules.json` : registre partagé (MAC, nom, libellé, favori, PIN, `keep_connected`). Un
+`auto_connect` laissé par la 1.2.1 ou une version antérieure est converti à la lecture en
+`keep_connected`. Emplacement (voir `arcomlib.data_dir`) :
 
 | Contexte | Dossier |
 |---|---|

@@ -5,6 +5,24 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), num
 
 ## [Non publié]
 
+### Ajouté
+
+- Interface PC : ventilation (Arrêt, 1, 2, 3, Auto) et température sur chaque carte. − et +
+  décalent la consigne de la zone d'un cran, de −6 à +6 ; si elle n'est pas encore connue, elle est
+  relue sur le module avant d'être décalée. Niveau et consigne affichés sont ceux relus sur le
+  module ; l'occupation et les alarmes restent affichées.
+- API locale : `{"kind": "temp", "action": "up" | "down"}` décale la consigne d'un cran, et la
+  réponse d'une commande indique l'action envoyée.
+
+### Supprimé
+
+- Réglage « Connexion auto », sur PC, sur Android et en ligne de commande : aucun module n'est
+  plus connecté d'office, ni au démarrage ni en arrière-plan. Les modules qui l'avaient passent en
+  « Maintenir la connexion » : connectés à la première commande (ou à « Se connecter »), ils le
+  restent jusqu'à « Se déconnecter ».
+- Android : l'appli ne se lance plus au démarrage du téléphone (autorisation correspondante
+  retirée).
+
 ## [1.2.1] - 2026-10-20
 
 ### Modifié
